@@ -1,0 +1,78 @@
+syntax = "proto3";
+
+option java_multiple_files = true;
+option java_package = "de.fhe.ai.mc";
+option java_outer_classname = "MCProto";
+
+package de.fhe.ai.mc.grpc_service;
+
+// The greeting service definition.
+service Greeter {
+  // Sends a greeting
+  rpc SayHello (HelloRequest) returns (HelloReply) {}
+}
+
+// The request message containing the user's name.
+message HelloRequest {
+  string name = 1;
+}
+
+// The response message containing the greetings
+message HelloReply {
+  string message = 1;
+}
+
+// Streaming Example
+
+service Streaming {
+  rpc Source(Empty) returns (stream Item) {} // Returns a stream
+  rpc Sink(stream Item) returns (Empty) {}   // Reads a stream
+  rpc Pipe(stream Item) returns (stream Item) {}  // Reads a streams and return a streams
+}
+
+message Empty {}
+
+message Item {
+  string title = 1;
+}
+
+// More or less real world example
+
+message Contact {
+  int64 id = 1;
+  string firstname = 2;
+  string lastname = 3;
+  repeated Address address = 4;
+  Location location = 5;
+}
+
+message Address {
+  string street = 1;
+  string city = 2;
+  string zipCode = 3;
+  string country = 4;
+}
+
+message Location {
+  double latitude = 1;
+  double longitude = 2;
+}
+
+message ContactServiceRequest {
+  int64 contactId = 1;
+  string searchString = 2;
+}
+
+message ContactServiceReply {
+  string message = 1;
+  bool success = 2;
+  repeated Contact contacts = 3;
+}
+
+service ContactService {
+  rpc insertContact(Contact) returns (ContactServiceReply) {} // Adds a new contact
+  rpc getAll(Empty) returns (ContactServiceReply) {} // Get all contacts
+  rpc getContacts(ContactServiceRequest) returns (ContactServiceReply) {} // Get contacts by id or search term
+  rpc deleteContact(ContactServiceRequest) returns (ContactServiceReply) {} // Delete contact
+  rpc updateContact(Contact) returns (ContactServiceReply) {} // Update Contact
+}

@@ -1,0 +1,76 @@
+version: "3.8"
+
+########################################################
+# Volume Definition
+########################################################
+volumes:
+  dependent-service-db-data:
+
+services:
+  ########################################################
+  # Reverse Proxy / Traefik
+  # Renamed service to `gateway` - more appropriate for
+  # its tasks
+  ########################################################
+  gateway:
+    image: "traefik:v2.9"
+    command:
+      - --entrypoints.web.address=:80
+      - --providers.docker
+      - --providers.docker.exposedbydefault=false
+      - --providers.file.filename=/etc/traefik_providers/canary_file_provider.yml
+      - --api.dashboard=true
+    ports:
+      - "80:80"
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+      - "./traefik:/etc/traefik_providers"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.dashboard.rule=Host(`localhost`) && (PathPrefix(`/api`, `/dashboard`))"
+      - "traefik.http.routers.dashboard.service=api@internal"
+
+  ########################################################
+  # Unreliable Service
+  ########################################################
+  unreliable-service:
+    build:
+      context: $PWD/unreliable-service/
+      dockerfile: $PWD/unreliable-service/src/main/docker/Dockerfile.jvm
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.services.canary-service.loadbalancer.server.port=8080"
+      - "traefik.http.routers.canary-service.entrypoints=traefik"
+
+
+  ########################################################
+  # Dependent Service Postgres DB
+  ########################################################
+  dependent-service-db:
+    image: postgres
+    restart: always
+    volumes:
+      # Use the named volume to store DB data
+      - dependent-service-db-data:/var/lib/postgresql/data
+    ports:
+      # We expose the port so that one can connect directly to this
+      # DB using `localhost:5432` from your IDE or some other tool
+      - "5432:5432"
+    environment:
+      # Postgres settings - should be used in your database connection
+      # config, e.g. `application.properties` from Quarkus
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: database
+
+  ########################################################
+  # Dependent Service
+  ########################################################
+  dependent-service:
+    build:
+      context: $PWD/dependent-service/
+      dockerfile: $PWD/dependent-service/src/main/docker/Dockerfile.jvm
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.services.old-service.loadbalancer.server.port=8080"
+      - "traefik.http.routers.old-service.entrypoints=traefik"

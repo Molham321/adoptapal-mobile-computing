@@ -1,0 +1,120 @@
+###
+GET http://localhost:8080/reactive-hello
+
+###
+GET http://localhost:8080/classic-hello
+
+###
+# For your custom http methods - use curl on command line like
+# curl http://localhost:8080/cheese-hello -X CHEESE
+
+###
+GET http://localhost:8080/reactive-multi-hello
+
+###
+POST http://localhost:8080/params-class/book;variant=hardcover?year=2021
+Content-Type: application/x-www-form-urlencoded
+Cookie: knownCustomer=yes
+X-Secret-Handshake: super-strong-secret
+
+price=20.00€
+
+###
+GET http://localhost:8080/greeting/Max/26
+
+
+###
+GET http://localhost:8080/custom-made-response
+
+
+###
+GET http://localhost:8080/public-user
+
+
+###
+GET http://localhost:8080/private-user
+
+
+###
+GET http://localhost:8080/with-exceptions
+
+
+###
+GET http://localhost:8080/mapped-exception
+
+###
+GET http://localhost:8080/remote-greeting
+
+###
+GET http://localhost:8080/remote-greeting
+
+###
+GET http://localhost:8080/remote-reactive-hello
+
+###
+GET http://localhost:8080/unreliable
+
+###
+GET http://localhost:8080/timeout
+
+###
+POST http://localhost:8080/persons
+Content-Type: application/json
+
+{
+  "name": "Susi Anton",
+  "addresses": [
+    {
+      "street": "Hauptstraße 42",
+      "city": "Village City",
+      "zipCode": "42247"
+    }
+  ]
+}
+
+###
+GET http://localhost:8080/persons?filter=Village
+
+<> 2023-11-01T202312.200.json
+<> 2023-11-01T201629.200.json
+<> 2023-11-01T195239.200.json
+<> 2023-11-01T195128.500.json
+<> 2023-11-01T195120.500.json
+<> 2023-11-01T195046.500.json
+<> 2023-11-01T194945.200.json
+<> 2023-11-01T194937.200.json
+<> 2023-11-01T194905.500.json
+<> 2023-11-01T194823.500.json
+<> 2023-11-01T194717.200.json
+<> 2023-11-01T194326.500.json
+<> 2023-11-01T194250.500.json
+<> 2023-11-01T194149.500.json
+<> 2023-11-01T192934.500.json
+<> 2023-11-01T192649.500.json
+<> 2023-11-01T192606.500.json
+<> 2023-11-01T192541.500.json
+<> 2023-11-01T192218.500.json
+<> 2023-11-01T192113.500.json
+<> 2023-11-01T192038.500.json
+<> 2023-11-01T191938.500.json
+
+###
+GET http://localhost:8080/persons?sortby=name
+
+###
+DELETE http://localhost:8080/persons/1
+
+###
+GET http://localhost:8080/persons/1
+
+###
+GET http://localhost:8080/persons/demo-data?amount=4
+
+<> 2023-11-01T202305.200.json
+<> 2023-11-01T201940.200.json
+<> 2023-11-01T201926.200.json
+<> 2023-11-01T201859.200.json
+<> 2023-11-01T201825.200.json
+<> 2023-11-01T201808.200.json
+<> 2023-11-01T201632.200.json
+<> 2023-11-01T201534.500.json

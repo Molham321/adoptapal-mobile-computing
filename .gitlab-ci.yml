@@ -1,0 +1,210 @@
+image: gradle:jdk17
+
+stages:
+  - build
+  - test
+  - package
+  - deploy
+
+variables:
+  AUTH_SERVICE_IMAGE_NAME: $CI_REGISTRY/$CI_PROJECT_NAMESPACE/$CI_PROJECT_NAME/auth-service:latest
+  UNRELIABLE_SERVICE_IMAGE_NAME: $CI_REGISTRY/$CI_PROJECT_NAMESPACE/$CI_PROJECT_NAME/unreliable-service:latest
+  DEPENDENT_SERVICE_IMAGE_NAME: $CI_REGISTRY/$CI_PROJECT_NAMESPACE/$CI_PROJECT_NAME/dependent-service:latest
+  JWT_SERVICE_IMAGE_NAME: $CI_REGISTRY/$CI_PROJECT_NAMESPACE/$CI_PROJECT_NAME/jwt-service:latest
+  GRADLE_OPTS: "-Dorg.gradle.daemon=false"
+  # Instruct Testcontainers to use the daemon of DinD.
+  DOCKER_HOST: "tcp://docker:2375"
+  # Improve performance with overlayfs.
+  DOCKER_DRIVER: overlay2
+
+before_script:
+  - GRADLE_USER_HOME="$(pwd)/.gradle"
+  - export GRADLE_USER_HOME
+
+################################################################################
+# Dependent Service
+
+build_dependent_service:
+  stage: build
+  script:
+    - cd dependent-service
+    - gradle --build-cache assemble
+  cache:
+    key: "$CI_COMMIT_REF_NAME"
+    policy: push
+    paths:
+      - build
+      - .gradle
+
+test_dependent_service:
+  stage: test
+  script:
+    - cd dependent-service
+    - export TESTCONTAINERS_RYUK_DISABLED=true
+    - gradle check
+  cache:
+    key: "$CI_COMMIT_REF_NAME"
+    policy: pull
+    paths:
+      - build
+      - .gradle
+  artifacts:
+    when: always
+    reports:
+      junit: dependent-service/build/test-results/test/**/TEST-*.xml
+  dependencies:
+    - build_dependent_service
+
+#build_dependent_service_image:
+#  stage: package
+#  image: docker:stable
+#  services:
+#    - docker:dind
+#  script:
+#    - cd dependent-service
+#    - docker build -f src/main/docker/Dockerfile.jvm -t $DEPENDENT_SERVICE_IMAGE_NAME .
+#  dependencies:
+#    - test_dependent_service
+
+################################################################################
+# Unreliable Service
+
+build_unreliable_service:
+  stage: build
+  script:
+    - cd unreliable-service
+    - gradle --build-cache assemble
+  cache:
+    key: "$CI_COMMIT_REF_NAME"
+    policy: push
+    paths:
+      - build
+      - .gradle
+
+test_unreliable_service:
+  stage: test
+  script:
+    - cd unreliable-service
+    - gradle check
+  cache:
+    key: "$CI_COMMIT_REF_NAME"
+    policy: pull
+    paths:
+      - build
+      - .gradle
+  artifacts:
+    when: always
+    reports:
+      junit: unreliable-service/build/test-results/test/**/TEST-*.xml
+  dependencies:
+    - build_unreliable_service
+
+build_unreliable_service_image:
+  stage: package
+  image: docker:stable
+  services:
+    - docker:dind
+  script:
+    - cd unreliable-service
+    - docker build -f src/main/docker/Dockerfile.jvm -t $UNRELIABLE_SERVICE_IMAGE_NAME .
+  dependencies:
+    - test_unreliable_service
+
+################################################################################
+# Auth Service
+
+build_auth_service:
+  stage: build
+  script:
+    - cd auth-service
+    - gradle --build-cache assemble
+  cache:
+    key: "$CI_COMMIT_REF_NAME"
+    policy: push
+    paths:
+      - build
+      - .gradle
+
+test_auth_service:
+  stage: test
+  script:
+    - cd auth-service
+    - gradle check
+  cache:
+    key: "$CI_COMMIT_REF_NAME"
+    policy: pull
+    paths:
+      - build
+      - .gradle
+  artifacts:
+    when: always
+    reports:
+      junit: auth-service/build/test-results/test/**/TEST-*.xml
+  dependencies:
+    - build_auth_service
+
+################################################################################
+# JWT Service
+
+build_jwt_service:
+  stage: build
+  script:
+    - cd jwt-service
+    - gradle --build-cache assemble
+  cache:
+    key: "$CI_COMMIT_REF_NAME"
+    policy: push
+    paths:
+      - build
+      - .gradle
+
+test_jwt_service:
+  stage: test
+  script:
+    - cd jwt-service
+    - gradle check
+  cache:
+    key: "$CI_COMMIT_REF_NAME"
+    policy: pull
+    paths:
+      - build
+      - .gradle
+  artifacts:
+    when: always
+    reports:
+      junit: jwt-service/build/test-results/test/**/TEST-*.xml
+  dependencies:
+    - build_jwt_service
+
+################################################################################
+# Documentation
+build_pages:
+  stage: build
+  image: python:latest
+  script:
+    - pip install mkdocs-material
+    - pip install mkdocs-material-extensions
+    - mkdocs build --site-dir public
+  artifacts:
+    paths:
+      - public
+
+deploy_pages:
+  image: node:14-buster
+  stage: deploy
+  script:
+    - npm install
+    - npm install -g netlify-cli --unsafe-perm=true
+    - netlify deploy --site $NETLIFY_SITE_ID --auth $NETLIFY_AUTH_TOKEN --dir public/ --prod
+  dependencies:
+    - build_pages
+
+###############################################################
+# GitLab-provided Sub-Scripts for various code quality checks #
+###############################################################
+
+include:
+#  - template: Jobs/Code-Quality.gitlab-ci.yml
+  - template: Jobs/Secret-Detection.gitlab-ci.yml
+  - template: Jobs/Dependency-Scanning.gitlab-ci.yml
+  - template: Jobs/License-Scanning.gitlab-ci.yml
