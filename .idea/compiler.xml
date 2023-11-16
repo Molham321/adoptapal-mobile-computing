@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="CompilerConfiguration">
+    <bytecodeTargetLevel>
+      <module name="animals.integrationTest" target="17" />
+      <module name="animals.main" target="17" />
+      <module name="animals.native-test" target="17" />
+      <module name="animals.quarkus-generated-sources" target="17" />
+      <module name="animals.quarkus-test-generated-sources" target="17" />
+      <module name="animals.test" target="17" />
+    </bytecodeTargetLevel>
+  </component>
+</project>

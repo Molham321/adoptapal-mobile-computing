@@ -1,7 +1,0 @@
-#------------------------------------
-# Auth Requests
-
-###
-GET http://{{auth_srv_full_path}}/login
-Accept: text/plain
-Authorization: Basic scott boss
