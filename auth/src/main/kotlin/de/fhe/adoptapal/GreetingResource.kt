@@ -1,3 +1,4 @@
+
 package de.fhe.adoptapal
 
 import jakarta.ws.rs.GET
