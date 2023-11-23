@@ -1,5 +1,6 @@
 package de.fhe.adoptapal
 
+import com.fasterxml.jackson.annotation.JsonView
 import jakarta.inject.Inject
 import jakarta.ws.rs.*
 import jakarta.ws.rs.core.MediaType
@@ -13,14 +14,15 @@ class UserResource {
     lateinit var userService: UserService
 
     @POST
-    @Path("/register")
-    fun register(user: User): User {
-        return userService.registerUser(user.username!!, user.password!!)
+    @Path("/register/{username}/{password}")
+    fun register(username: String, password: String): UserEntity {
+        return userService.registerUser(username, password)
     }
 
-    @POST
-    @Path("/login")
-    fun login(user: User): User? {
-        return userService.loginUser(user.username!!, user.password!!)
+    @JsonView(Views.Public::class)
+    @GET
+    @Path("/login/{username}/{password}")
+    fun login(username: String, password: String): UserEntity? {
+        return userService.loginUser(username, password)
     }
 }

@@ -11,23 +11,23 @@ class UserService {
     lateinit var userRepository: UserRepository
 
     @Transactional
-    fun registerUser(username: String, password: String): User {
+    fun registerUser(username: String, password: String): UserEntity {
         val existingUser = userRepository.findByUsername(username)
         if (existingUser != null) {
             // Benutzer existiert bereits
             throw IllegalArgumentException("Benutzer existiert bereits")
         }
 
-        val newUser = User()
-        newUser.username = username
-        newUser.password = password
+        val newUserEntity = UserEntity()
+        newUserEntity.username = username
+        newUserEntity.password = password
 
-        userRepository.persist(newUser)
+        userRepository.persist(newUserEntity)
 
-        return newUser
+        return newUserEntity
     }
 
-    fun loginUser(username: String, password: String): User? {
+    fun loginUser(username: String, password: String): UserEntity? {
         val user = userRepository.findByUsername(username)
 
         if (user != null && user.password == password) {

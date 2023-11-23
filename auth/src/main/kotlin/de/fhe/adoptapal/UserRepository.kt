@@ -4,8 +4,8 @@ import io.quarkus.hibernate.orm.panache.kotlin.PanacheRepository
 import jakarta.enterprise.context.ApplicationScoped
 
 @ApplicationScoped
-class UserRepository : PanacheRepository<User> {
-    fun findByUsername(username: String): User? {
+class UserRepository : PanacheRepository<UserEntity> {
+    fun findByUsername(username: String): UserEntity? {
         return find("username", username).firstResult()
     }
 }
