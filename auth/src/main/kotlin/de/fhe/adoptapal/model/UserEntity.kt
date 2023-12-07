@@ -10,6 +10,7 @@ import jakarta.enterprise.context.ApplicationScoped
 import jakarta.persistence.Entity
 import jakarta.persistence.GeneratedValue
 import jakarta.persistence.Id
+import jakarta.transaction.Transactional
 
 @Entity
 @UserDefinition
@@ -34,6 +35,7 @@ class UserEntity {
 
 @ApplicationScoped
 class UserRepository: PanacheRepository<UserEntity> {
+    @Transactional
     fun add(username: String, password: String) {
         val userEntity = UserEntity()
         userEntity.username = username
