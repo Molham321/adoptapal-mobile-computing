@@ -22,7 +22,7 @@ class JwtTokenUtils {
             val privateKey = readPrivateKey(privateKeyLocation)
             val claimsBuilder = Jwt.claims()
             val currentTimeInSecs = currentTimeInSecs().toLong()
-            val groups = HashSet<String>();
+            val groups = HashSet<String>()
             claimsBuilder.issuer(issuer)
             claimsBuilder.subject(userEntity.username)
             claimsBuilder.issuedAt(currentTimeInSecs)

@@ -57,7 +57,7 @@ class AuthResource {
         return Response.ok().build()
     }
 
-    @POST
+    @GET
     @Path("/login")
     fun login(request: AuthRequest): Response {
         val userEntity = userRepository.findByUsername(request.username)
