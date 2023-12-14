@@ -20,7 +20,7 @@ class UserEntity {
     var id: Long? = null
 
     @Username
-    lateinit var username: String
+    lateinit var email: String
 
     @Password
     lateinit var password: String
@@ -29,20 +29,20 @@ class UserEntity {
     lateinit var role: String
 
     override fun toString(): String {
-        return "User(id=$id, username=$username, password=$password)"
+        return "User(id=$id, email=$email, password=$password)"
     }
 }
 
 @ApplicationScoped
 class UserRepository: PanacheRepository<UserEntity> {
     @Transactional
-    fun add(username: String, password: String) {
+    fun add(email: String, password: String) {
         val userEntity = UserEntity()
-        userEntity.username = username
+        userEntity.email = email
         userEntity.password = PasswordUtils.hashPassword(password)
 
         persist(userEntity)
     }
 
-    fun findByUsername(name: String) = find("username", name).firstResult()
+    fun findByEmail(name: String) = find("email", name).firstResult()
 }
