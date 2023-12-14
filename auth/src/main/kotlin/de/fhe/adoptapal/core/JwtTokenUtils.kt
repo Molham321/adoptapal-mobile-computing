@@ -24,7 +24,7 @@ class JwtTokenUtils {
             val currentTimeInSecs = currentTimeInSecs().toLong()
             val groups = HashSet<String>()
             claimsBuilder.issuer(issuer)
-            claimsBuilder.subject(userEntity.username)
+            claimsBuilder.subject(userEntity.email)
             claimsBuilder.issuedAt(currentTimeInSecs)
             claimsBuilder.groups(groups)
             claimsBuilder.expiresAt(currentTimeInSecs + duration)

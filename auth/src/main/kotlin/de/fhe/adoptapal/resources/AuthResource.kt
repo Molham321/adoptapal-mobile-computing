@@ -16,9 +16,6 @@ import jakarta.ws.rs.Produces
 import jakarta.ws.rs.core.MediaType
 import jakarta.ws.rs.core.Response
 
-// TODO(erik): use reactive API
-// BUG(erik): unsupported content type on login
-
 @RequestScoped
 @Path("/")
 @Produces(MediaType.APPLICATION_JSON)
@@ -44,7 +41,7 @@ class AuthResource {
     @POST
     @Path("/register")
     fun register(request: AuthRequest): Response {
-        val existingUser = userRepository.findByUsername(request.username)
+        val existingUser = userRepository.findByEmail(request.email)
 
         // username is taken
         if (existingUser != null) {
@@ -52,28 +49,28 @@ class AuthResource {
             return Response.status(Response.Status.BAD_REQUEST).build()
         }
 
-        LOG.info("registered user '${request.username}'")
-        userRepository.add(request.username, request.password)
+        LOG.info("registered user '${request.email}'")
+        userRepository.add(request.email, request.password)
         return Response.ok().build()
     }
 
     @GET
     @Path("/login")
     fun login(request: AuthRequest): Response {
-        val userEntity = userRepository.findByUsername(request.username)
+        val userEntity = userRepository.findByEmail(request.email)
 
         // user doesn't exits or password doesn't match
         if (userEntity == null || !PasswordUtils.verifyPassword(request.password, userEntity.password)) {
-            LOG.warn("failed login attempt for user '${request.username}'")
+            LOG.warn("failed login attempt for user '${request.email}'")
             return Response.status(Response.Status.UNAUTHORIZED).build()
         }
 
         return try {
             val token = JwtTokenUtils.generateToken(userEntity, duration!!, issuer)
-            LOG.info("generated new token for user '${userEntity.username}'")
+            LOG.info("generated new token for user '${userEntity.email}'")
             Response.ok(LoginResponse(token, duration!!)).build()
         } catch (e: Exception) {
-            LOG.error("internal error on login attempt for user '${userEntity.username}'", e)
+            LOG.error("internal error on login attempt for user '${userEntity.email}'", e)
             Response.serverError().build()
         }
     }

@@ -1,9 +1,7 @@
 package de.fhe.adoptapal.resources
 
-// TODO(erik): this should be id based
-
 class AuthRequest {
-    lateinit var username: String
+    lateinit var email: String
     lateinit var password: String
 }
 
