@@ -5,4 +5,4 @@ class AuthRequest {
     lateinit var password: String
 }
 
-data class LoginResponse(var token: String, var duration: Long)
+data class LoginResponse(var token: String, var expiresAt: Long)

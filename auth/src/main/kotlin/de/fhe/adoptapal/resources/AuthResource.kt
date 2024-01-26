@@ -1,20 +1,18 @@
 package de.fhe.adoptapal.resources
 
-import de.fhe.adoptapal.core.JwtTokenUtils
+import de.fhe.adoptapal.core.JwtBean
 import de.fhe.adoptapal.core.PasswordUtils
+import de.fhe.adoptapal.model.UserEntity
 import de.fhe.adoptapal.model.UserRepository
 import io.quarkus.security.Authenticated
-import org.eclipse.microprofile.config.inject.ConfigProperty
 import org.eclipse.microprofile.jwt.JsonWebToken
 import org.jboss.logging.Logger
 import jakarta.enterprise.context.RequestScoped
 import jakarta.inject.Inject
-import jakarta.ws.rs.GET
-import jakarta.ws.rs.POST
-import jakarta.ws.rs.Path
-import jakarta.ws.rs.Produces
+import jakarta.ws.rs.*
 import jakarta.ws.rs.core.MediaType
 import jakarta.ws.rs.core.Response
+import java.util.Optional
 
 @RequestScoped
 @Path("/")
@@ -31,12 +29,33 @@ class AuthResource {
     private lateinit var userRepository: UserRepository
 
     @Inject
-    @ConfigProperty(name = "de.fhe.ai.jwt.duration")
-    private var duration: Long? = null
+    private lateinit var jwtBean: JwtBean
 
-    @Inject
-    @ConfigProperty(name = "mp.jwt.verify.issuer")
-    private lateinit var issuer: String
+    private fun validateJwt(): Optional<Response> {
+        return try {
+            LOG.info("validating token for '${jwt.name}'")
+            if (jwtBean.validate(jwt)) {
+                Optional.empty()
+            } else {
+                Optional.of(Response.status(Response.Status.UNAUTHORIZED).build())
+            }
+        } catch (e: Exception) {
+            LOG.error("internal error on validation for token '${jwt.name}'", e)
+            Optional.of(Response.serverError().build())
+        }
+    }
+
+    private fun validatePassword(email: String, password: String): Optional<Response> {
+        val userEntity = userRepository.findByEmail(email)
+
+        // user doesn't exist or password doesn't match
+        if (userEntity == null || !PasswordUtils.verifyPassword(password, userEntity.password)) {
+            LOG.warn("failed login attempt for user '${email}'")
+            return Optional.of(Response.status(Response.Status.UNAUTHORIZED).build())
+        }
+
+        return Optional.empty()
+    }
 
     @POST
     @Path("/register")
@@ -50,25 +69,63 @@ class AuthResource {
         }
 
         LOG.info("registered user '${request.email}'")
-        userRepository.add(request.email, request.password)
+        userRepository.create(request.email, request.password, UserEntity.Role.USER)
         return Response.ok().build()
     }
 
     @GET
     @Path("/login")
     fun login(request: AuthRequest): Response {
-        val userEntity = userRepository.findByEmail(request.email)
+        val errorResponse = validatePassword(request.email, request.password)
+        if (errorResponse.isPresent) {
+            return errorResponse.get()
+        }
 
-        // user doesn't exits or password doesn't match
-        if (userEntity == null || !PasswordUtils.verifyPassword(request.password, userEntity.password)) {
-            LOG.warn("failed login attempt for user '${request.email}'")
+        val userEntity = userRepository.findByEmail(request.email)!!
+        return try {
+            val tokenAndExpiresAt = jwtBean.generateToken(userEntity)
+            LOG.info("generated new token for user '${userEntity.email}'")
+            Response.ok(LoginResponse(tokenAndExpiresAt.first, tokenAndExpiresAt.second)).build()
+        } catch (e: Exception) {
+            LOG.error("internal error on login attempt for user '${userEntity.email}'", e)
+            Response.serverError().build()
+        }
+    }
+
+    @POST
+    @Path("/delete")
+    fun delete(request: AuthRequest): Response {
+        val errorResponse = validatePassword(request.email, request.password)
+        if (errorResponse.isPresent) {
+            return errorResponse.get()
+        }
+
+        userRepository.deleteByEmail(request.email)
+        return Response.ok().build()
+    }
+
+    @PUT
+    @Path("/password")
+    @Authenticated
+    fun password(request: AuthRequest): Response {
+        val errorResponse = validateJwt()
+        if (errorResponse.isPresent) {
+            return errorResponse.get()
+        }
+
+        val userEntity = userRepository.findByEmail(jwt.name)
+
+        // user doesn't exist or is trying to access the wrong email
+        if (userEntity == null || userEntity.email != jwt.name) {
+            LOG.warn("failed password update attempt for user '${request.email}' with auth '${jwt.name}'")
             return Response.status(Response.Status.UNAUTHORIZED).build()
         }
 
         return try {
-            val token = JwtTokenUtils.generateToken(userEntity, duration!!, issuer)
-            LOG.info("generated new token for user '${userEntity.email}'")
-            Response.ok(LoginResponse(token, duration!!)).build()
+            jwtBean.invalidate(jwt)
+            userRepository.updatePasswordById(userEntity.id!!, request.password)
+            LOG.info("updated password for user '${userEntity.email}'")
+            Response.ok().build()
         } catch (e: Exception) {
             LOG.error("internal error on login attempt for user '${userEntity.email}'", e)
             Response.serverError().build()
@@ -76,10 +133,9 @@ class AuthResource {
     }
 
     @GET
-    @Authenticated
     @Path("/validate")
+    @Authenticated
     fun validate(): Response {
-        LOG.info("Validated token for '${jwt.name}'")
-        return Response.ok().build()
+        return validateJwt().orElse(Response.ok().build())
     }
 }
