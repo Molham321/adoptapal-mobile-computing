@@ -77,16 +77,29 @@
 #   accessed directly. (example: "foo.example.com,bar.example.com")
 #
 ###
+FROM gradle:jdk17 as build
+WORKDIR /workspace/app
+
+COPY build.gradle .
+COPY gradle.properties .
+COPY settings.gradle .
+
+RUN gradle build 2> /dev/null || true
+
+COPY src src
+
+RUN gradle build -x test
+
 FROM registry.access.redhat.com/ubi8/openjdk-17:1.17
 
 ENV LANGUAGE='en_US:en'
 
 
 # We make four distinct layers so if there are application changes the library layers can be re-used
-COPY --chown=185 build/quarkus-app/lib/ /deployments/lib/
-COPY --chown=185 build/quarkus-app/*.jar /deployments/
-COPY --chown=185 build/quarkus-app/app/ /deployments/app/
-COPY --chown=185 build/quarkus-app/quarkus/ /deployments/quarkus/
+COPY --from=build --chown=185 workspace/app/build/quarkus-app/lib/ /deployments/lib/
+COPY --from=build --chown=185 workspace/app/build/quarkus-app/*.jar /deployments/
+COPY --from=build --chown=185 workspace/app/build/quarkus-app/app/ /deployments/app/
+COPY --from=build --chown=185 workspace/app/build/quarkus-app/quarkus/ /deployments/quarkus/
 
 EXPOSE 8080
 USER 185
