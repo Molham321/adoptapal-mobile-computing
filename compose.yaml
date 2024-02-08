@@ -1,0 +1,67 @@
+version: "3.8"
+
+volumes:
+  db-data:
+
+services:
+  # external services
+  gateway:
+    image: "traefik:v2.9"
+    command:
+      - --entrypoints.web.address=:80
+      - --providers.docker
+      - --providers.docker.exposedbydefault=false
+      - --providers.file.filename=/etc/traefik_providers/file_provider.yml
+      - --api.dashboard=true
+    ports:
+      - "80:80"
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+      - "./traefik:/etc/traefik_providers"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.dashboard.rule=Host(`localhost`) && (PathPrefix(`/api`, `/dashboard`))"
+      - "traefik.http.routers.dashboard.service=api@internal"
+
+  db:
+    image: "postgres"
+    restart: "always"
+    volumes:
+      - "db-data:/var/lib/postgresql/data"
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: adoptapal
+      POSTGRES_PASSWORD: adoptapal
+      POSTGRES_DB: adoptapal
+
+  # internal services
+  auth:
+    build:
+      context: "${PWD}/auth"
+      dockerfile: "${PWD}/auth/src/main/docker/Dockerfile.jvm"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.services.auth.loadbalancer.server.port=8080"
+      - "traefik.http.routers.auth.rule=PathPrefix(`/auth`)"
+      - "traefik.http.routers.auth.entrypoints=traefik"
+
+  user:
+    build:
+      context: "${PWD}/user"
+      dockerfile: "${PWD}/user/src/main/docker/Dockerfile.jvm"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.services.user.loadbalancer.server.port=8080"
+      - "traefik.http.routers.user.rule=PathPrefix(`/user`)"
+      - "traefik.http.routers.user.entrypoints=traefik"
+
+  animals:
+    build:
+      context: "${PWD}/animals"
+      dockerfile: "${PWD}/animals/src/main/docker/Dockerfile.jvm"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.services.animals.loadbalancer.server.port=8080"
+      - "traefik.http.routers.animals.rule=PathPrefix(`/animals`)"
+      - "traefik.http.routers.animals.entrypoints=traefik"
