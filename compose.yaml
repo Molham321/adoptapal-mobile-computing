@@ -11,7 +11,8 @@ services:
       - --entrypoints.web.address=:80
       - --providers.docker
       - --providers.docker.exposedbydefault=false
-      - --providers.file.filename=/etc/traefik_providers/file_provider.yml
+      # NOTE: removed as it's not used right now
+      # - --providers.file.filename=/etc/traefik_providers/file_provider.yml
       - --api.dashboard=true
     ports:
       - "80:80"
@@ -44,7 +45,7 @@ services:
       - "traefik.enable=true"
       - "traefik.http.services.auth.loadbalancer.server.port=8080"
       - "traefik.http.routers.auth.rule=PathPrefix(`/auth`)"
-      - "traefik.http.routers.auth.entrypoints=traefik"
+      - "traefik.http.routers.auth.entrypoints=web"
 
   user:
     build:
@@ -54,7 +55,7 @@ services:
       - "traefik.enable=true"
       - "traefik.http.services.user.loadbalancer.server.port=8080"
       - "traefik.http.routers.user.rule=PathPrefix(`/user`)"
-      - "traefik.http.routers.user.entrypoints=traefik"
+      - "traefik.http.routers.user.entrypoints=web"
 
   animals:
     build:
@@ -64,4 +65,4 @@ services:
       - "traefik.enable=true"
       - "traefik.http.services.animals.loadbalancer.server.port=8080"
       - "traefik.http.routers.animals.rule=PathPrefix(`/animals`)"
-      - "traefik.http.routers.animals.entrypoints=traefik"
+      - "traefik.http.routers.animals.entrypoints=web"
