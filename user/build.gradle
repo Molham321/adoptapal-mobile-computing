@@ -1,6 +1,6 @@
 plugins {
-    id 'org.jetbrains.kotlin.jvm' version "1.9.10"
-    id "org.jetbrains.kotlin.plugin.allopen" version "1.9.10"
+    id 'org.jetbrains.kotlin.jvm' version '1.9.10'
+    id 'org.jetbrains.kotlin.plugin.allopen' version '1.9.10'
     id 'io.quarkus'
 }
 
@@ -10,24 +10,30 @@ repositories {
 }
 
 dependencies {
+    implementation 'org.jetbrains.kotlin:kotlin-stdlib-jdk8'
+
+    // quarkus general
     implementation enforcedPlatform("${quarkusPlatformGroupId}:${quarkusPlatformArtifactId}:${quarkusPlatformVersion}")
+    implementation 'io.quarkus:quarkus-resteasy-reactive-jsonb'
+    implementation 'io.quarkus:quarkus-resteasy-reactive-jackson'
     implementation 'io.quarkus:quarkus-resteasy-reactive'
     implementation 'io.quarkus:quarkus-kotlin'
-    implementation 'org.jetbrains.kotlin:kotlin-stdlib-jdk8'
     implementation 'io.quarkus:quarkus-arc'
+
+    // db and persistence
+    implementation 'io.quarkus:quarkus-hibernate-orm'
+    implementation 'io.quarkus:quarkus-hibernate-orm-panache-kotlin'
+    implementation 'io.quarkus:quarkus-jdbc-h2'
+    implementation 'io.quarkus:quarkus-jdbc-postgresql'
+
+    // jwt and auth
+    implementation 'io.quarkus:quarkus-security-jpa'
+    implementation 'io.quarkus:quarkus-smallrye-jwt'
+    implementation 'io.quarkus:quarkus-smallrye-jwt-build'
+
+    // misc
     testImplementation 'io.quarkus:quarkus-junit5'
     testImplementation 'io.rest-assured:rest-assured'
-
-    // new
-    implementation 'io.quarkus:quarkus-resteasy-reactive-jsonb'
-    implementation("io.quarkus:quarkus-resteasy-reactive-jackson")
-    implementation("io.quarkus:quarkus-micrometer-registry-prometheus")
-    implementation("io.quarkus:quarkus-jdbc-h2")
-    implementation("io.quarkus:quarkus-hibernate-orm-panache-kotlin")
-    implementation("io.quarkus:quarkus-opentelemetry")
-    implementation("io.quarkus:quarkus-smallrye-jwt")
-    implementation("io.quarkus:quarkus-security-jpa")
-    implementation("io.quarkus:quarkus-smallrye-jwt-build")
 }
 
 group 'de.fhe.adoptapal'
@@ -39,13 +45,13 @@ java {
 }
 
 test {
-    systemProperty "java.util.logging.manager", "org.jboss.logmanager.LogManager"
+    systemProperty 'java.util.logging.manager', 'org.jboss.logmanager.LogManager'
 }
 allOpen {
-    annotation("jakarta.ws.rs.Path")
-    annotation("jakarta.enterprise.context.ApplicationScoped")
-    annotation("jakarta.persistence.Entity")
-    annotation("io.quarkus.test.junit.QuarkusTest")
+    annotation('jakarta.ws.rs.Path')
+    annotation('jakarta.enterprise.context.ApplicationScoped')
+    annotation('jakarta.persistence.Entity')
+    annotation('io.quarkus.test.junit.QuarkusTest')
 }
 
 compileKotlin {

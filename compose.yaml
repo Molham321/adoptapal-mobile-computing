@@ -43,7 +43,6 @@ services:
       dockerfile: "./src/main/docker/Dockerfile.jvm"
     labels:
       - "traefik.enable=true"
-      - "traefik.http.services.auth.loadbalancer.server.port=8080"
       - "traefik.http.routers.auth.rule=PathPrefix(`/auth`)"
       - "traefik.http.routers.auth.entrypoints=web"
 
@@ -53,7 +52,6 @@ services:
       dockerfile: "./src/main/docker/Dockerfile.jvm"
     labels:
       - "traefik.enable=true"
-      - "traefik.http.services.user.loadbalancer.server.port=8080"
       - "traefik.http.routers.user.rule=PathPrefix(`/user`)"
       - "traefik.http.routers.user.entrypoints=web"
 
@@ -63,6 +61,5 @@ services:
       dockerfile: "./src/main/docker/Dockerfile.jvm"
     labels:
       - "traefik.enable=true"
-      - "traefik.http.services.animals.loadbalancer.server.port=8080"
       - "traefik.http.routers.animals.rule=PathPrefix(`/animals`)"
       - "traefik.http.routers.animals.entrypoints=web"
