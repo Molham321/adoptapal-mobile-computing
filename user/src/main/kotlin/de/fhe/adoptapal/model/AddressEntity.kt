@@ -1,11 +1,8 @@
 package de.fhe.adoptapal.model
 
-import io.quarkus.hibernate.orm.panache.kotlin.PanacheRepository
-import jakarta.enterprise.context.ApplicationScoped
 import jakarta.persistence.Entity
 import jakarta.persistence.GeneratedValue
 import jakarta.persistence.Id
-import jakarta.transaction.Transactional
 import java.time.LocalDateTime
 
 @Entity
