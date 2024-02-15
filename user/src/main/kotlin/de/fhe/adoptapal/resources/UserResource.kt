@@ -1,5 +1,6 @@
 package de.fhe.adoptapal.resources
 
+import de.fhe.adoptapal.messaging.KafkaProducer
 import de.fhe.adoptapal.model.UserEntity
 import de.fhe.adoptapal.repository.UserRepository
 import jakarta.enterprise.context.RequestScoped
@@ -9,7 +10,6 @@ import jakarta.ws.rs.core.MediaType
 import jakarta.ws.rs.core.Response
 import jakarta.xml.bind.ValidationException
 import org.jboss.logging.Logger
-import java.time.LocalDateTime
 
 @RequestScoped
 @Path("/users")
@@ -21,6 +21,10 @@ class UserResource {
 
     @Inject
     lateinit var userRepository: UserRepository
+
+    // kafka test
+    @Inject
+    lateinit var producer: KafkaProducer
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
@@ -102,6 +106,10 @@ class UserResource {
     @Path("/{id}")
     fun deleteById(@PathParam("id") id: Long): Response {
         return userRepository.findById(id)?.let { userEntity ->
+
+            // Sende die Benutzer-ID an den Kafka-Kanal für Benutzerlöschung
+            producer.sendPost(id);
+
             userRepository.deleteUser(id)
             Response.ok(userEntity).build()
         } ?: Response.status(Response.Status.NOT_FOUND).entity("User with ID $id not found").build()
