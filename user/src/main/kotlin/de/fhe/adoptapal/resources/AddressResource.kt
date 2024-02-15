@@ -1,7 +1,7 @@
 package de.fhe.adoptapal.resources
 
 import de.fhe.adoptapal.model.AddressEntity
-import de.fhe.adoptapal.model.AddressRepository
+import de.fhe.adoptapal.repository.AddressRepository
 import jakarta.enterprise.context.RequestScoped
 import jakarta.inject.Inject
 import jakarta.ws.rs.*

@@ -1,7 +1,7 @@
 package de.fhe.adoptapal.core
 
-import de.fhe.adoptapal.model.AddressRepository
-import de.fhe.adoptapal.model.UserRepository
+import de.fhe.adoptapal.repository.AddressRepository
+import de.fhe.adoptapal.repository.UserRepository
 import io.quarkus.runtime.StartupEvent
 import jakarta.enterprise.context.ApplicationScoped
 import jakarta.enterprise.event.Observes
