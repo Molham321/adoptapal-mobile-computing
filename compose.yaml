@@ -63,3 +63,12 @@ services:
       - "traefik.enable=true"
       - "traefik.http.routers.animals.rule=PathPrefix(`/animals`)"
       - "traefik.http.routers.animals.entrypoints=web"
+
+  media:
+    build:
+      context: "./media"
+      dockerfile: "./src/main/docker/Dockerfile.jvm"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.media.rule=PathPrefix(`/media`)"
+      - "traefik.http.routers.media.entrypoints=web"
