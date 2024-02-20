@@ -73,6 +73,11 @@ class UserResource {
             }
             userRepository.createUser(newUser)
             LOG.info("User created successfully")
+
+            // Sende die Benutzer-ID an den Kafka-Kanal für createUser
+            LOG.info("send post to kafka!")
+            producer.sendRegisterPost(newUser.id);
+
             Response.status(Response.Status.CREATED).entity(newUser).build()
         } catch (e: ValidationException) {
             LOG.error("Validation error during user creation", e)
@@ -110,7 +115,7 @@ class UserResource {
 
             // Sende die Benutzer-ID an den Kafka-Kanal für Benutzerlöschung
             LOG.info("send post to kafka!")
-            producer.sendPost(id);
+            producer.sendDeletePost(id);
 
             userRepository.deleteUser(id)
             Response.ok(userEntity).build()

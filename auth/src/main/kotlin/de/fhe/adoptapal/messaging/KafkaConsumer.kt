@@ -10,13 +10,15 @@ class KafkaConsumer {
     companion object {
         private val LOG: Logger = Logger.getLogger(KafkaConsumer::class.java)
     }
-    @Incoming("user-to-auth")
-    fun receive(userId: String): String {
-        LOG.info("Incoming from kafka!$userId")
+    @Incoming("user-to-auth-delete")
+    fun receiveDelete(userId: String): String {
+        LOG.info("Incoming from kafka... user with ID: $userId was deleted" )
+        return userId
+    }
 
-        //Do something with the ID
-        //...
-
+    @Incoming("user-to-auth-Register")
+    fun receiveRegister(userId: String): String {
+        LOG.info("Incoming from kafka... user with ID: $userId was Register" )
         return userId
     }
 }

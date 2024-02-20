@@ -14,12 +14,21 @@ class KafkaProducer {
     }
 
     @Inject
-    @Channel("user-to-auth")
-    lateinit var emitter: Emitter<String>
+    @Channel("user-to-auth-delete")
+    lateinit var DeleteEmitter: Emitter<String>
+
+    @Inject
+    @Channel("user-to-auth-Register")
+    lateinit var RegisterEmitter: Emitter<String>
 
     //Logging
-    fun sendPost(userId: Long?) {
+    fun sendDeletePost(userId: Long?) {
         LOG.info("sendPost methode")
-        emitter.send(userId.toString())
+        DeleteEmitter.send(userId.toString())
+    }
+
+    fun sendRegisterPost(userId: Long?) {
+        LOG.info("sendPost methode")
+        RegisterEmitter.send(userId.toString())
     }
 }
