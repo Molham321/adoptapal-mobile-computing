@@ -14,7 +14,7 @@ class KafkaProducer {
     }
 
     @Inject
-    @Channel("post-out")
+    @Channel("user-to-auth")
     lateinit var emitter: Emitter<String>
 
     //Logging
