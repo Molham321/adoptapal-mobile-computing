@@ -3,6 +3,7 @@ package de.fhe.adoptapal.resources
 import de.fhe.adoptapal.messaging.KafkaProducer
 import de.fhe.adoptapal.model.UserEntity
 import de.fhe.adoptapal.repository.UserRepository
+import io.quarkus.logging.Log
 import jakarta.enterprise.context.RequestScoped
 import jakarta.inject.Inject
 import jakarta.ws.rs.*
@@ -108,6 +109,7 @@ class UserResource {
         return userRepository.findById(id)?.let { userEntity ->
 
             // Sende die Benutzer-ID an den Kafka-Kanal für Benutzerlöschung
+            LOG.info("send post to kafka!")
             producer.sendPost(id);
 
             userRepository.deleteUser(id)

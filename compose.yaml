@@ -24,6 +24,9 @@ services:
       - "traefik.http.routers.dashboard.rule=Host(`localhost`) && (PathPrefix(`/api`, `/dashboard`))"
       - "traefik.http.routers.dashboard.service=api@internal"
 
+  #########################################
+  # Message-Broker / Kafka
+  ########################################
   zookeeper:
     image: quay.io/strimzi/kafka:0.23.0-kafka-2.8.0
     command: [
@@ -68,6 +71,10 @@ services:
     build:
       context: "./auth"
       dockerfile: "./src/main/docker/Dockerfile.jvm"
+    environment:
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+    depends_on:
+      - db
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.auth.rule=PathPrefix(`/auth`)"
@@ -77,6 +84,10 @@ services:
     build:
       context: "./user"
       dockerfile: "./src/main/docker/Dockerfile.jvm"
+    environment:
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+    depends_on:
+      - db
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.user.rule=PathPrefix(`/user`)"
