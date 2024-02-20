@@ -71,10 +71,6 @@ services:
     build:
       context: "./auth"
       dockerfile: "./src/main/docker/Dockerfile.jvm"
-    environment:
-      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
-    depends_on:
-      - db
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.auth.rule=PathPrefix(`/auth`)"
@@ -97,6 +93,10 @@ services:
     build:
       context: "./animals"
       dockerfile: "./src/main/docker/Dockerfile.jvm"
+    environment:
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+    depends_on:
+      - db
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.animals.rule=PathPrefix(`/animals`)"

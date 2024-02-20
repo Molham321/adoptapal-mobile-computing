@@ -15,11 +15,11 @@ class KafkaProducer {
 
     @Inject
     @Channel("post-out")
-    lateinit var emitter: Emitter<Long>
+    lateinit var emitter: Emitter<String>
 
     //Logging
     fun sendPost(userId: Long?) {
         LOG.info("sendPost methode")
-        emitter.send(userId)
+        emitter.send(userId.toString())
     }
 }
