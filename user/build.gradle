@@ -20,6 +20,10 @@ dependencies {
     implementation 'io.quarkus:quarkus-kotlin'
     implementation 'io.quarkus:quarkus-arc'
 
+    //kafka
+    implementation("io.quarkus:quarkus-smallrye-reactive-messaging-kafka")
+
+
     // db and persistence
     implementation 'io.quarkus:quarkus-hibernate-orm'
     implementation 'io.quarkus:quarkus-hibernate-orm-panache-kotlin'

@@ -1,8 +1,9 @@
 package de.fhe.adoptapal.resources
 
+import de.fhe.adoptapal.messaging.KafkaProducer
 import de.fhe.adoptapal.model.UserEntity
-import de.fhe.adoptapal.model.UserRepository
-import io.quarkus.arc.ComponentsProvider.LOG
+import de.fhe.adoptapal.repository.UserRepository
+import io.quarkus.logging.Log
 import jakarta.enterprise.context.RequestScoped
 import jakarta.inject.Inject
 import jakarta.ws.rs.*
@@ -10,7 +11,6 @@ import jakarta.ws.rs.core.MediaType
 import jakarta.ws.rs.core.Response
 import jakarta.xml.bind.ValidationException
 import org.jboss.logging.Logger
-import java.time.LocalDateTime
 
 @RequestScoped
 @Path("/users")
@@ -22,6 +22,10 @@ class UserResource {
 
     @Inject
     lateinit var userRepository: UserRepository
+
+    // kafka test
+    @Inject
+    lateinit var producer: KafkaProducer
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
@@ -63,12 +67,17 @@ class UserResource {
     @Produces(MediaType.APPLICATION_JSON)
     fun createUser(newUser: UserEntity): Response {
         return try {
-            validateUser(newUser)
+            userRepository.validateUser(newUser)
             userRepository.findByEmail(newUser.email!!)?.let {
                 throw ValidationException("Email is already in use")
             }
             userRepository.createUser(newUser)
             LOG.info("User created successfully")
+
+            // Sende die Benutzer-ID an den Kafka-Kanal für createUser
+            LOG.info("send post to kafka!")
+            producer.sendRegisterPost(newUser.id);
+
             Response.status(Response.Status.CREATED).entity(newUser).build()
         } catch (e: ValidationException) {
             LOG.error("Validation error during user creation", e)
@@ -86,7 +95,7 @@ class UserResource {
     fun updateById(@PathParam("id") id: Long, updatedUser: UserEntity): Response {
         return userRepository.findById(id)?.let { existingUser ->
             try {
-                updateExistingUser(existingUser, updatedUser)
+                userRepository.updateExistingUser(existingUser, updatedUser)
                 userRepository.updateUser(existingUser)
                 Response.ok(existingUser).build()
             } catch (e: ValidationException) {
@@ -103,36 +112,13 @@ class UserResource {
     @Path("/{id}")
     fun deleteById(@PathParam("id") id: Long): Response {
         return userRepository.findById(id)?.let { userEntity ->
+
+            // Sende die Benutzer-ID an den Kafka-Kanal für Benutzerlöschung
+            LOG.info("send post to kafka!")
+            producer.sendDeletePost(id);
+
             userRepository.deleteUser(id)
             Response.ok(userEntity).build()
         } ?: Response.status(Response.Status.NOT_FOUND).entity("User with ID $id not found").build()
-    }
-
-    private fun validateUser(user: UserEntity) {
-        if (user.username.isNullOrEmpty() || user.email.isNullOrEmpty()) {
-            throw ValidationException("Username and email are required")
-        }
-    }
-
-    private fun updateExistingUser(existingUser: UserEntity, updatedUser: UserEntity) {
-        existingUser.apply {
-            username = updatedUser.username.takeUnless { it.isNullOrEmpty() } ?: username
-            if (updatedUser.email?.isNotEmpty() == true) {
-                existingUser.id?.let { validateEmailAvailability(it, updatedUser.email!!) }
-                email = updatedUser.email
-            }
-            phoneNumber = updatedUser.phoneNumber.takeUnless { it.isNullOrEmpty() } ?: phoneNumber
-            lastChangeTimestamp = LocalDateTime.now()
-
-            // Todo updtae Address
-        }
-    }
-
-    private fun validateEmailAvailability(userId: Long, email: String) {
-        userRepository.findByEmail(email)?.let {
-            if (it.id != userId) {
-                throw ValidationException("Email is already in use by another user")
-            }
-        }
     }
 }
