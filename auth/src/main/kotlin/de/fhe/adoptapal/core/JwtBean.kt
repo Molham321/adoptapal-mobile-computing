@@ -1,8 +1,8 @@
 package de.fhe.adoptapal.core
 
+import de.fhe.adoptapal.model.TokenEntity
 import de.fhe.adoptapal.model.TokenRepository
 import de.fhe.adoptapal.model.UserEntity
-import de.fhe.adoptapal.resources.AuthResource
 import io.smallrye.jwt.build.Jwt
 import jakarta.enterprise.context.ApplicationScoped
 import jakarta.inject.Inject
@@ -24,14 +24,15 @@ class JwtBean {
     class ValidationException(message: String): Exception(message) {
         companion object {
             fun missingClaim(): ValidationException = ValidationException("a token did not contain the validity claim '$VALIDITY_ID_KEY'")
-            fun missingEntity(id: Long): ValidationException = ValidationException("a token validity entity with id '$id' was not found")
         }
     }
+
+    data class Token(var token: TokenEntity, var tokenString: String)
 
     companion object {
         const val VALIDITY_ID_KEY = "validityId"
 
-        private val LOG: Logger = Logger.getLogger(AuthResource::class.java)
+        private val LOG: Logger = Logger.getLogger(JwtBean::class.java)
 
         @Throws(java.lang.Exception::class)
         private fun readPrivateKey(pemResName: String): PrivateKey {
@@ -87,11 +88,11 @@ class JwtBean {
     lateinit var tokenRepository: TokenRepository
 
     @Throws(java.lang.Exception::class)
-    fun generateToken(userEntity: UserEntity): Pair<String, Long> {
+    fun generateToken(userEntity: UserEntity): Token {
         val currentTimeInSecs = TimeUtils.currentTime(TimeUtils.Unit.Seconds)
         val expiresAt = currentTimeInSecs + duration!!
 
-        val newValidity = tokenRepository.create(expiresAt)
+        val newValidity = tokenRepository.create(userEntity.id!!, expiresAt)
 
         val privateKey = readPrivateKey(privateKeyLocation)
         val claimsBuilder = Jwt.claims()
@@ -102,7 +103,7 @@ class JwtBean {
         claimsBuilder.groups(groups)
         claimsBuilder.expiresAt(expiresAt)
         claimsBuilder.claim(VALIDITY_ID_KEY, newValidity.id)
-        return claimsBuilder.jws().sign(privateKey) to expiresAt
+        return Token(newValidity, claimsBuilder.jws().sign(privateKey))
     }
 
     @Throws(ValidationException::class)
@@ -116,28 +117,6 @@ class JwtBean {
         // BUG(erik): we cannot for some reason convert the internal number representation of the claim into a Long
         // directly, so unfortunately, to get forward, we have to go through a useless string conversion
         val v = validity.get().toString().toLong()
-
-        val tokenEntity = tokenRepository.findById(v)
-
-        if (tokenEntity == null) {
-            LOG.error("token validity id was not found")
-            throw ValidationException.missingEntity(v)
-        }
-
-        return !tokenEntity.invalidated
-    }
-
-    @Throws(ValidationException::class)
-    fun invalidate(token: JsonWebToken) {
-        val validity = token.claim<Any>(VALIDITY_ID_KEY)
-
-        if (validity.isEmpty) {
-            LOG.fatal("token did not contain validity claim")
-            throw ValidationException.missingClaim()
-        }
-
-        // NOTE(erik): see above
-        val v = validity.get().toString().toLong()
-        tokenRepository.invalidateById(v)
+        return tokenRepository.findById(v) != null
     }
 }

@@ -15,16 +15,17 @@ class TokenEntity {
     @GeneratedValue
     var id: Long? = null
 
-    var expiresAt: Long = 0
+    var userId: Long? = null
 
-    var invalidated: Boolean = false
+    var expiresAt: Long = 0
 }
 
 @ApplicationScoped
 class TokenRepository: PanacheRepository<TokenEntity> {
     @Transactional
-    fun create(expiresAt: Long): TokenEntity {
+    fun create(userId: Long, expiresAt: Long): TokenEntity {
         val tokenEntity = TokenEntity()
+        tokenEntity.userId = userId
         tokenEntity.expiresAt = expiresAt
 
         deleteExpired()
@@ -34,14 +35,23 @@ class TokenRepository: PanacheRepository<TokenEntity> {
     }
 
     @Transactional
-    fun invalidateById(id: Long) {
-        deleteExpired()
-        update("invalidated = true where id = :id", Parameters().and("id", id))
+    fun listAllForUser(userId: Long): List<TokenEntity> {
+        return list("where userId = :userId", Parameters().and("userId", userId))
     }
 
     @Transactional
     fun deleteExpired() {
         val now = TimeUtils.currentTime(TimeUtils.Unit.Seconds)
         delete("expiresAt <= :now", Parameters().and("now", now))
+    }
+
+    @Transactional
+    fun delete(id: Long) {
+        deleteById(id)
+    }
+
+    @Transactional
+    fun deleteAllForUser(userId: Long) {
+        delete("where userId = :userId", Parameters().and("userId", userId))
     }
 }
