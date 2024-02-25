@@ -1,5 +1,6 @@
 package de.fhe.adoptapal.core
 
+import de.fhe.adoptapal.model.ErrorResponse
 import jakarta.ws.rs.core.Response
 
 class TokenInvalidatedException : Exception("a token for a user was no longer valid")
@@ -41,5 +42,3 @@ fun mapExceptionToResponse(ex: Exception): Response {
         else -> Response.serverError().build()
     }
 }
-
-private data class ErrorResponse(val reason: String)

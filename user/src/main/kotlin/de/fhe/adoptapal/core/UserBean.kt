@@ -6,6 +6,7 @@ import de.fhe.adoptapal.model.UserEntity
 import de.fhe.adoptapal.repository.UserRepository
 import jakarta.enterprise.context.ApplicationScoped
 import jakarta.inject.Inject
+import jakarta.transaction.Transactional
 import org.jboss.logging.Logger
 
 @ApplicationScoped
@@ -41,54 +42,68 @@ class UserBean {
 
     fun validateSubject(subject: RequestSubject) {
         LOG.info("validating request subject")
-        val user = validateUserExists(subject.id)
-
-        LOG.info("validating email for user with id `${subject.id}`")
-        if (subject.email != user.email) {
-            throw PasswordAuthenticationException()
-        }
+        validateUserExists(subject.id)
 
         // TODO: ask auth service
     }
 
-    fun create(email: String, password: String, phoneNumber: String?, addressId: Long?): UserEntity {
+    @Transactional
+    fun create(username: String, email: String, password: String, phoneNumber: String, addressId: Long?): UserEntity {
         LOG.info("creating user")
         validateEmailUnique(email)
-        return repository.create(email, password, phoneNumber, addressId)
+        val entity = repository.create(username, email, phoneNumber, addressId)
+        producer.emitCreateUser(entity.id!!, email, password)
+        return entity
     }
 
+    @Transactional
     fun get(id: Long): UserEntity {
         LOG.info("getting user with id `$id`")
         return validateUserExists(id)
     }
 
+    @Transactional
     fun get(email: String): UserEntity {
         LOG.info("getting user with email `$email`")
         return validateUserExists(email)
     }
 
+    @Transactional
     fun getAll(): List<UserEntity> {
         LOG.info("getting all users")
         return repository.listAll()
     }
 
-    fun updateAuthorized(subject: RequestSubject, newEmail: String?, newPassword: String?, newPhoneNumber: String?) {
+    @Transactional
+    fun updateAuthorized(subject: RequestSubject, newUsername: String?, newEmail: String?, newPassword: String?, newPhoneNumber: String?) {
         validateSubject(subject)
-        update(subject.id, newEmail, newPassword, newPhoneNumber)
+        update(subject.id, newUsername, newEmail, newPassword, newPhoneNumber)
     }
 
-    fun update(id: Long, newEmail: String?, newPassword: String?, newPhoneNumber: String?) {
+    @Transactional
+    fun update(id: Long, newUsername: String?, newEmail: String?, newPassword: String?, newPhoneNumber: String?) {
         LOG.info("updating user with id `$id`")
-        repository.update(id, newEmail, newPassword, newPhoneNumber)
+        if (newEmail == null || newPassword == null) {
+            producer.emitUpdateUser(id, newEmail, newPassword)
+        }
+        repository.update(id, newUsername, newPhoneNumber)
     }
 
+    @Transactional
     fun deleteAuthorized(subject: RequestSubject) {
         validateSubject(subject)
         delete(subject.id)
     }
 
+    @Transactional
     fun delete(id: Long) {
         LOG.info("deleting user with id `$id`")
         repository.delete(id)
+    }
+
+    @Transactional
+    fun deleteAll() {
+        LOG.info("deleting all users")
+        repository.deleteAll()
     }
 }

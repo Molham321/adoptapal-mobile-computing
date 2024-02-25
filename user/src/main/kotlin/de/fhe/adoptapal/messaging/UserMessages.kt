@@ -1,4 +1,4 @@
-package de.fhe.adoptapal.messaging.models
+package de.fhe.adoptapal.messaging
 
 import io.quarkus.kafka.client.serialization.ObjectMapperSerializer
 

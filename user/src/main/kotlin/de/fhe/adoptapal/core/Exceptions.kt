@@ -1,7 +1,9 @@
 package de.fhe.adoptapal.core
 
+import de.fhe.adoptapal.resources.ErrorResponse
 import jakarta.ws.rs.core.Response
 
+class AddressNotFoundException(val id: Long) : Exception("address was not found")
 class UserNotFoundException(val id: Long? = null, val email: String? = null) : Exception("user was not found") {
     companion object {
         fun byId(id: Long): UserNotFoundException {
@@ -34,5 +36,3 @@ fun mapExceptionToResponse(ex: Exception): Response {
         else -> Response.serverError().build()
     }
 }
-
-private data class ErrorResponse(val reason: String)

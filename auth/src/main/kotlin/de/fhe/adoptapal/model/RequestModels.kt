@@ -29,3 +29,4 @@ data class UserResponse(var id: Long, var email: String)
 
 data class NewTokenResponse(var id: Long, var token: String, var expiresAt: Long)
 
+data class ErrorResponse(var reason: String)

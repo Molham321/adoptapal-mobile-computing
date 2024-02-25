@@ -11,7 +11,7 @@ import java.time.LocalDateTime
 @ApplicationScoped
 class UserRepository: PanacheRepository<UserEntity> {
     @Transactional
-    fun create(username: String, email: String, phoneNumber: String?, addressId: Long?): UserEntity {
+    fun create(username: String, email: String, phoneNumber: String, addressId: Long?): UserEntity {
         val entity = UserEntity()
 
         entity.username = username
@@ -33,7 +33,7 @@ class UserRepository: PanacheRepository<UserEntity> {
     fun find(email: String): UserEntity? = find("email", email).firstResult()
 
     @Transactional
-    fun update(id: Long, newUsername: String?, newEmail: String?, newPhoneNumber: String?) {
+    fun update(id: Long, newUsername: String?, newPhoneNumber: String?) {
         var fields = ""
         val params = Parameters.with("id", id)
 
@@ -41,14 +41,12 @@ class UserRepository: PanacheRepository<UserEntity> {
             fields += ", username = :username"
             params.and("username", it)
         }
-        newEmail?.let {
-            fields += ", email = :email"
-            params.and("email", it)
-        }
         newPhoneNumber?.let {
             fields += ", phoneNumber = :phoneNumber"
             params.and("phoneNumber", it)
         }
+
+        // TODO: address id
 
         fields = fields.substring(2)
         update("$fields where id = ?id", params)

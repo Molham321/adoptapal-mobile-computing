@@ -16,8 +16,8 @@ class UserEntity {
     lateinit var email: String
 
     lateinit var username: String
+    lateinit var phoneNumber: String
 
-    var phoneNumber: String? = null
     var addressId: Long? = null
 
     lateinit var createdAt: LocalDateTime

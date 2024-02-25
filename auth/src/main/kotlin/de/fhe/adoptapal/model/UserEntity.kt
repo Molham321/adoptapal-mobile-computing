@@ -39,15 +39,15 @@ class UserEntity {
 class UserRepository: PanacheRepository<UserEntity> {
     @Transactional
     fun create(id: Long, email: String, password: String, role: UserEntity.Role = UserEntity.Role.USER): UserEntity {
-        val userEntity = UserEntity()
-        userEntity.id = id
-        userEntity.email = email
-        userEntity.password = PasswordUtils.hashPassword(password)
-        userEntity.role = role.name
+        val entity = UserEntity()
+        entity.id = id
+        entity.email = email
+        entity.password = PasswordUtils.hashPassword(password)
+        entity.role = role.name
 
-        persist(userEntity)
+        persist(entity)
         flush()
-        return userEntity
+        return entity
     }
 
     @Transactional
@@ -67,7 +67,7 @@ class UserRepository: PanacheRepository<UserEntity> {
         }
         newPassword?.let {
             fields += ", password = :password"
-            params.and("password", it)
+            params.and("password", PasswordUtils.hashPassword(it))
         }
         newRole?.let {
             fields += ", role = :role"
@@ -75,7 +75,7 @@ class UserRepository: PanacheRepository<UserEntity> {
         }
 
         fields = fields.substring(2)
-        update("$fields where id = ?id", params)
+        update("$fields where id = :id", params)
     }
 
     @Transactional

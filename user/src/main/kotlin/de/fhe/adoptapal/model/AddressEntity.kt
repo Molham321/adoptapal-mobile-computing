@@ -11,11 +11,9 @@ class AddressEntity {
     @GeneratedValue
     var id: Long? = null
 
-    var street: String? = null
-    var city: String? = null
-    var postalCode: String? = null
+    lateinit var street: String
+    lateinit var city: String
+    lateinit var postalCode: String
 
-    var createdTimestamp: LocalDateTime = LocalDateTime.now()
-    var lastChangeTimestamp: LocalDateTime = LocalDateTime.now()
-    var isDeleted: Boolean = false
+    lateinit var createdAt: LocalDateTime
 }

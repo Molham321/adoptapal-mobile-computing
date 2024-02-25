@@ -1,117 +1,95 @@
 package de.fhe.adoptapal.resources
 
-import de.fhe.adoptapal.messaging.KafkaProducer
-import de.fhe.adoptapal.model.UserEntity
-import de.fhe.adoptapal.repository.UserRepository
+import de.fhe.adoptapal.core.UserBean
+import de.fhe.adoptapal.core.mapExceptionToResponse
+import de.fhe.adoptapal.model.RequestSubject
 import jakarta.enterprise.context.RequestScoped
 import jakarta.inject.Inject
 import jakarta.ws.rs.*
 import jakarta.ws.rs.core.MediaType
 import jakarta.ws.rs.core.Response
-import jakarta.xml.bind.ValidationException
 import org.jboss.logging.Logger
 
 @RequestScoped
-@Path("/users")
+@Path("/user")
+@Consumes(MediaType.APPLICATION_JSON)
+@Produces(MediaType.APPLICATION_JSON)
 class UserResource {
     companion object {
         private val LOG: Logger = Logger.getLogger(UserResource::class.java)
     }
 
     @Inject
-    lateinit var userRepository: UserRepository
+    lateinit var userBean: UserBean
 
-    @Inject
-    lateinit var producer: KafkaProducer
+    @POST
+    fun createUser(request: CreateUserRequest): Response {
+        return try {
+            Response.ok(userBean.create(request.username ,request.email, request.password, request.phoneNumber, request.addressId)).build()
+        } catch (e: Exception) {
+            LOG.error("failed to create user", e)
+            mapExceptionToResponse(e)
+        }
+    }
 
     @GET
-    @Produces(MediaType.APPLICATION_JSON)
+    @Path("/{id}")
+    fun get(@PathParam("id") id: Long): Response {
+        return try {
+            Response.ok(userBean.get(id)).build()
+        } catch (e: Exception) {
+            LOG.error("failed to get user with id `$id`", e)
+            mapExceptionToResponse(e)
+        }
+    }
+
+    @GET
+    @Path("/email/{email}")
+    fun get(@PathParam("email") email: String): Response {
+        return try {
+            Response.ok(userBean.get(email)).build()
+        } catch (e: Exception) {
+            LOG.error("failed to get user with email `$email`", e)
+            mapExceptionToResponse(e)
+        }
+    }
+
+    @GET
     fun getAll(): Response {
         return try {
-            val users: List<UserEntity> = userRepository.listAll()
+            val users = userBean.getAll()
             if (users.isNotEmpty()) {
-                LOG.info("Successfully retrieved all users")
                 Response.ok(users).build()
             } else {
                 Response.status(Response.Status.NO_CONTENT).build()
             }
         } catch (e: Exception) {
-            LOG.error("Failed to get all users", e)
-            Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(e.message).build()
-        }
-    }
-
-    @GET
-    @Path("/{id}")
-    @Produces(MediaType.APPLICATION_JSON)
-    fun getById(@PathParam("id") id: Long): Response {
-        return userRepository.findById(id)?.let {
-            Response.ok(it).build()
-        } ?: Response.status(Response.Status.NOT_FOUND).entity("User with ID $id not found").build()
-    }
-
-    @GET
-    @Path("/email/{email}")
-    @Produces(MediaType.APPLICATION_JSON)
-    fun getByEmail(@PathParam("email") email: String): Response {
-        return userRepository.findByEmail(email)?.let {
-            Response.ok(it).build()
-        } ?: Response.status(Response.Status.NOT_FOUND).entity("User with email $email not found").build()
-    }
-
-    @POST
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
-    fun createUser(request: CreateUserRequest): Response {
-        LOG.info("creating user")
-        return try {
-            val userEntity = userRepository.tryCreate(request.username, request.email, request.phoneNumber, request.addressId)
-                    ?: return Response.status(Response.Status.BAD_REQUEST).build()
-
-            producer.emitCreateUser(userEntity.id!!, request.email, request.password)
-            LOG.info("created user with id ${userEntity.id}")se
-
-            Response.status(Response.Status.CREATED).entity(userEntity).build()
-        } catch (e: ValidationException) {
-            LOG.error("Validation error during user creation", e)
-            Response.status(Response.Status.BAD_REQUEST).entity(e.message).build()
-        } catch (e: Exception) {
-            LOG.error("Failed to create user", e)
-            Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(e.message).build()
+            LOG.error("failed to get all users", e)
+            mapExceptionToResponse(e)
         }
     }
 
     @PUT
     @Path("/{id}")
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
-    fun updateById(@PathParam("id") id: Long, updatedUser: UserEntity): Response {
-        return userRepository.findById(id)?.let { existingUser ->
-            try {
-                userRepository.updateExistingUser(existingUser, updatedUser)
-                userRepository.update(existingUser)
-                Response.ok(existingUser).build()
-            } catch (e: ValidationException) {
-                LOG.error("Validation error during user update", e)
-                Response.status(Response.Status.BAD_REQUEST).entity(e.message).build()
-            } catch (e: Exception) {
-                LOG.error("Failed to update user", e)
-                Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(e.message).build()
-            }
-        } ?: Response.status(Response.Status.NOT_FOUND).entity("User with ID $id not found").build()
+    fun update(@PathParam("id") id: Long, request: UpdateUserRequest): Response {
+        return try {
+            userBean.updateAuthorized(RequestSubject(id, request.email, request.password), request.newUsername, request.newEmail, request.newPassword, request.newPhoneNumber)
+            Response.ok().build()
+        } catch (e: Exception) {
+            LOG.error("failed to update user with id `$id`", e)
+            mapExceptionToResponse(e)
+        }
     }
 
     @DELETE
     @Path("/{id}")
-    fun deleteById(@PathParam("id") id: Long): Response {
-        return userRepository.findById(id)?.let { userEntity ->
-
-            // Sende die Benutzer-ID an den Kafka-Kanal für Benutzerlöschung
-            LOG.info("send post to kafka!")
-            producer.emitDeleteUser(id);
-
-            userRepository.delete(id)
-            Response.ok(userEntity).build()
-        } ?: Response.status(Response.Status.NOT_FOUND).entity("User with ID $id not found").build()
+    fun delete(@PathParam("id") id: Long, request: DeleteUserRequest): Response {
+        return try {
+            userBean.deleteAuthorized(RequestSubject(id, request.email, request.password))
+            Response.ok().build()
+        } catch (e: Exception) {
+            LOG.error("failed to delete user with id `$id`", e)
+            mapExceptionToResponse(e)
+        }
     }
 }

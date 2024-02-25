@@ -4,13 +4,13 @@ class CreateUserRequest {
     lateinit var username: String
     lateinit var email: String
     lateinit var password: String
-
-    var phoneNumber: String? = null
+    lateinit var phoneNumber: String
     var addressId: Long? = null
 }
 
 class UpdateUserRequest {
     // TODO: move to header
+    lateinit var email: String
     lateinit var password: String
 
     var newUsername: String? = null
@@ -22,6 +22,7 @@ class UpdateUserRequest {
 
 class DeleteUserRequest {
     // TODO: move to header
+    lateinit var email: String
     lateinit var password: String
 }
 
@@ -36,3 +37,5 @@ class UpdateAddressRequest {
     var newCity: String? = null
     var newPostalCode: String? = null
 }
+
+data class ErrorResponse(val reason: String)

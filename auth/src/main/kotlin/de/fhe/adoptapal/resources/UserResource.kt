@@ -12,6 +12,7 @@ import org.jboss.logging.Logger
 
 @RequestScoped
 @Path("/user")
+@Consumes(MediaType.APPLICATION_JSON)
 @Produces(MediaType.APPLICATION_JSON)
 class UserResource {
     companion object {
