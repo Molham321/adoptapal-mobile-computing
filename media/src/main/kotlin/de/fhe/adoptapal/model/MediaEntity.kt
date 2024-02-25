@@ -49,7 +49,7 @@ class MediaRepository: PanacheRepository<MediaEntity> {
     fun add(
         filePath: String,
         mediaType: String
-    ) {
+    ): MediaEntity {
         val mediaEntity = MediaEntity()
         mediaEntity.filePath = filePath
         mediaEntity.mediaType = mediaType
@@ -58,7 +58,9 @@ class MediaRepository: PanacheRepository<MediaEntity> {
         mediaEntity.lastChangeTimestamp = LocalDateTime.now()
         mediaEntity.isDeleted = false
 
-        persist(mediaEntity)
+        persistAndFlush(mediaEntity)
+
+        return mediaEntity
     }
 
     // braucht hier keine extra Funktion

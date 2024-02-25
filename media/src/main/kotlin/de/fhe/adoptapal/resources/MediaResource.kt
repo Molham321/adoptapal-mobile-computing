@@ -19,6 +19,7 @@ import org.jboss.resteasy.reactive.multipart.FileUpload
 import java.io.File
 import java.util.*
 import javax.print.attribute.standard.Media
+import kotlin.math.log
 
 @RequestScoped
 @Path("/media")
@@ -39,9 +40,15 @@ class MediaResource {
         val mediaEntity: MediaEntity? = mediaRepository.findByID(id)
 
         return if(mediaEntity != null) {
-            val file = File(fileStorePath, mediaEntity?.filePath)
+            val file = File(fileStorePath, mediaEntity.filePath)
 
-            Response.ok(file).header(HttpHeaders.CONTENT_TYPE, mediaEntity.mediaType).build();
+            LOG.info(fileStorePath +  mediaEntity.filePath)
+            LOG.info(file)
+
+            // Response.ok(file).header(HttpHeaders.CONTENT_TYPE, mediaEntity.mediaType).build();
+
+            Response.ok().header("Access-Control-Expose-Headers", HttpHeaders.CONTENT_DISPOSITION)
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"${file.name}\"").build()
         } else {
             Response.status(Response.Status.NOT_FOUND).entity("Media with id $id not found").build()
         }
@@ -64,9 +71,11 @@ class MediaResource {
 
             file?.copyTo(newFile)
 
-            mediaRepository.add(file!!.name, fileType)
+            val newMediaEntity = mediaRepository.add(file!!.name, fileType)
 
-            Response.status(Response.Status.CREATED).entity(file).build()
+            // mediaRepository.add(file!!.name, fileType)
+
+            Response.status(Response.Status.CREATED).entity(newMediaEntity).build()
         } catch (e: Exception) {
             LOG.error("Failed to create media", e)
             Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(e.message).build()
