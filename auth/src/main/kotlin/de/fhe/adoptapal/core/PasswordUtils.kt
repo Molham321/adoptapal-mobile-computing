@@ -13,7 +13,6 @@ class PasswordUtils {
     companion object {
         fun hashPassword(plainPassword: String): String = BcryptUtil.bcryptHash(plainPassword)
 
-        @Throws(java.lang.Exception::class)
         fun verifyPassword(plainPassword: String, encryptedPassword: String): Boolean {
             val rawPassword: Password = ModularCrypt.decode(encryptedPassword)
             val factory = PasswordFactory.getInstance(BCryptPassword.ALGORITHM_BCRYPT)

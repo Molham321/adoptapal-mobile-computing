@@ -8,8 +8,8 @@ import io.quarkus.security.jpa.Roles
 import io.quarkus.security.jpa.UserDefinition
 import io.quarkus.security.jpa.Username
 import jakarta.enterprise.context.ApplicationScoped
+import jakarta.persistence.Column
 import jakarta.persistence.Entity
-import jakarta.persistence.GeneratedValue
 import jakarta.persistence.Id
 import jakarta.transaction.Transactional
 
@@ -17,10 +17,10 @@ import jakarta.transaction.Transactional
 @UserDefinition
 class UserEntity {
     @Id
-    @GeneratedValue
     var id: Long? = null
 
     @Username
+    @Column(unique = true)
     lateinit var email: String
 
     @Password
@@ -44,8 +44,9 @@ class UserEntity {
 @ApplicationScoped
 class UserRepository: PanacheRepository<UserEntity> {
     @Transactional
-    fun create(email: String, password: String, role: String = UserEntity.Role.USER): UserEntity {
+    fun create(id: Long, email: String, password: String, role: String = UserEntity.Role.USER): UserEntity {
         val userEntity = UserEntity()
+        userEntity.id = id
         userEntity.email = email
         userEntity.password = PasswordUtils.hashPassword(password)
         userEntity.role = role
@@ -56,7 +57,17 @@ class UserRepository: PanacheRepository<UserEntity> {
     }
 
     @Transactional
-    fun updatePasswordById(id: Long, password: String) {
+    fun updateEmail(id: Long, email: String) {
+        update(
+                "email=:email where id=:id",
+                Parameters()
+                        .and("email", email)
+                        .and("id", id)
+        )
+    }
+
+    @Transactional
+    fun updatePassword(id: Long, password: String) {
         update(
             "password=:password where id=:id",
             Parameters()
@@ -66,7 +77,7 @@ class UserRepository: PanacheRepository<UserEntity> {
     }
 
     @Transactional
-    fun updateRoleById(id: Long, role: String) {
+    fun updateRole(id: Long, role: String) {
         update(
             "role=:role where id=:id",
             Parameters()
@@ -76,29 +87,7 @@ class UserRepository: PanacheRepository<UserEntity> {
     }
 
     @Transactional
-    fun updatePasswordByEmail(email: String, password: String) {
-        update(
-            "password=:password where email=:email",
-            Parameters()
-                .and("password", PasswordUtils.hashPassword(password))
-                .and("email", email)
-        )
+    fun delete(id: Long) {
+        deleteById(id)
     }
-
-    @Transactional
-    fun updateRoleByEmail(email: String, role: String) {
-        update(
-            "role=:role where email=:email",
-            Parameters()
-                .and("role", role)
-                .and("email", email)
-        )
-    }
-
-    @Transactional
-    fun deleteByEmail(email: String) {
-        delete("email", email)
-    }
-
-    fun findByEmail(name: String): UserEntity? = find("email", name).firstResult()
 }
