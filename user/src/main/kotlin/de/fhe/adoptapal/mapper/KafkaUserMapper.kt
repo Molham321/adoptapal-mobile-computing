@@ -1,6 +1,5 @@
 package de.fhe.adoptapal.mapper
 
-import de.fhe.adoptapal.messaging.models.KafkaUserRegistrationResponse
 import de.fhe.adoptapal.model.UserEntity
 import io.quarkus.kafka.client.serialization.ObjectMapperDeserializer
 import io.quarkus.kafka.client.serialization.ObjectMapperSerializer

@@ -1,6 +1,9 @@
-package de.fhe.adoptapal.resources
+package de.fhe.adoptapal.model
+
+data class RequestSubject(val id: Long, val email: String, val password: String)
 
 class TokenRequest {
+    lateinit var email: String
     lateinit var password: String
 }
 
@@ -10,6 +13,7 @@ class CreateUserRequest {
 }
 
 class UpdateUserRequest {
+    lateinit var email: String
     lateinit var password: String
 
     var newEmail: String? = null
@@ -17,10 +21,9 @@ class UpdateUserRequest {
 }
 
 class DeleteUserRequest {
+    lateinit var email: String
     lateinit var password: String
 }
-
-data class UsersResponse(val users: List<UserResponse>)
 
 data class UserResponse(var id: Long, var email: String)
 

@@ -28,10 +28,14 @@ class TokenRepository: PanacheRepository<TokenEntity> {
         tokenEntity.userId = userId
         tokenEntity.expiresAt = expiresAt
 
-        deleteExpired()
         persist(tokenEntity)
         flush()
         return tokenEntity
+    }
+
+    @Transactional
+    fun find(id: Long): TokenEntity? {
+        return find("id", id).firstResult()
     }
 
     @Transactional
@@ -40,18 +44,23 @@ class TokenRepository: PanacheRepository<TokenEntity> {
     }
 
     @Transactional
-    fun deleteExpired() {
-        val now = TimeUtils.currentTime(TimeUtils.Unit.Seconds)
-        delete("expiresAt <= :now", Parameters().and("now", now))
-    }
-
-    @Transactional
     fun delete(id: Long) {
         deleteById(id)
     }
 
     @Transactional
+    fun deleteForUser(userId: Long, id: Long) {
+        delete("where id = :id and userId = :userId", Parameters().and("userId", userId).and("id", id))
+    }
+
+    @Transactional
     fun deleteAllForUser(userId: Long) {
         delete("where userId = :userId", Parameters().and("userId", userId))
+    }
+
+    @Transactional
+    fun deleteExpired() {
+        val now = TimeUtils.currentTime(TimeUtils.Unit.Seconds)
+        delete("expiresAt <= :now", Parameters().and("now", now))
     }
 }

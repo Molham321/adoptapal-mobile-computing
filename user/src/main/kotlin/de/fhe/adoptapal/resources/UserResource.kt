@@ -3,7 +3,6 @@ package de.fhe.adoptapal.resources
 import de.fhe.adoptapal.messaging.KafkaProducer
 import de.fhe.adoptapal.model.UserEntity
 import de.fhe.adoptapal.repository.UserRepository
-import io.quarkus.logging.Log
 import jakarta.enterprise.context.RequestScoped
 import jakarta.inject.Inject
 import jakarta.ws.rs.*
@@ -15,7 +14,6 @@ import org.jboss.logging.Logger
 @RequestScoped
 @Path("/users")
 class UserResource {
-
     companion object {
         private val LOG: Logger = Logger.getLogger(UserResource::class.java)
     }
@@ -23,7 +21,6 @@ class UserResource {
     @Inject
     lateinit var userRepository: UserRepository
 
-    // kafka test
     @Inject
     lateinit var producer: KafkaProducer
 
@@ -65,20 +62,16 @@ class UserResource {
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    fun createUser(newUser: UserEntity): Response {
+    fun createUser(request: CreateUserRequest): Response {
+        LOG.info("creating user")
         return try {
-            userRepository.validateUser(newUser)
-            userRepository.findByEmail(newUser.email!!)?.let {
-                throw ValidationException("Email is already in use")
-            }
-            userRepository.createUser(newUser)
-            LOG.info("User created successfully")
+            val userEntity = userRepository.tryCreate(request.username, request.email, request.phoneNumber, request.addressId)
+                    ?: return Response.status(Response.Status.BAD_REQUEST).build()
 
-            // Sende die Benutzer-ID an den Kafka-Kanal für createUser
-            LOG.info("send post to kafka!")
-            producer.sendRegisterPost(newUser.id);
+            producer.emitCreateUser(userEntity.id!!, request.email, request.password)
+            LOG.info("created user with id ${userEntity.id}")se
 
-            Response.status(Response.Status.CREATED).entity(newUser).build()
+            Response.status(Response.Status.CREATED).entity(userEntity).build()
         } catch (e: ValidationException) {
             LOG.error("Validation error during user creation", e)
             Response.status(Response.Status.BAD_REQUEST).entity(e.message).build()
@@ -96,7 +89,7 @@ class UserResource {
         return userRepository.findById(id)?.let { existingUser ->
             try {
                 userRepository.updateExistingUser(existingUser, updatedUser)
-                userRepository.updateUser(existingUser)
+                userRepository.update(existingUser)
                 Response.ok(existingUser).build()
             } catch (e: ValidationException) {
                 LOG.error("Validation error during user update", e)
@@ -115,9 +108,9 @@ class UserResource {
 
             // Sende die Benutzer-ID an den Kafka-Kanal für Benutzerlöschung
             LOG.info("send post to kafka!")
-            producer.sendDeletePost(id);
+            producer.emitDeleteUser(id);
 
-            userRepository.deleteUser(id)
+            userRepository.delete(id)
             Response.ok(userEntity).build()
         } ?: Response.status(Response.Status.NOT_FOUND).entity("User with ID $id not found").build()
     }
