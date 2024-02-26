@@ -4,6 +4,7 @@ import de.fhe.adoptapal.model.*
 import io.smallrye.jwt.build.Jwt
 import jakarta.enterprise.context.ApplicationScoped
 import jakarta.inject.Inject
+import jakarta.transaction.Transactional
 import org.eclipse.microprofile.config.inject.ConfigProperty
 import org.eclipse.microprofile.jwt.JsonWebToken
 import org.jboss.logging.Logger
@@ -78,107 +79,23 @@ class TokenBean {
     @Inject
     private lateinit var userBean: UserBean
 
-    private fun validateTokenExists(id: Long): TokenEntity {
+    @Transactional
+    fun validateTokenExists(id: Long): TokenEntity {
         LOG.info("ensuring existence of token with id `$id`")
         return repository.find(id) ?: throw TokenNotFoundException(id)
     }
 
-    private fun validateSubject(subject: RequestSubject) {
-        userBean.validateSubject(subject)
+    @Transactional
+    fun validateCredentials(credentials: UserCredentials, userId: Long) {
+        userBean.validateCredentials(credentials, userId)
     }
 
-    private fun validateSubject(subject: RequestSubject, id: Long) {
-        validateSubject(subject)
+    @Transactional
+    fun validateCredentials(jwt: JsonWebToken, userId: Long) {
+        userBean.validateCredentials(jwt, userId)
 
-        val token = validateTokenExists(id)
-        LOG.info("validating token access for token with id `$id` from user with id `${subject.id}`")
-        if (id != token.userId) {
-            // do not expose the existence of this token to another user
-            throw TokenNotFoundException(id)
-        }
-    }
-
-    fun createForUserAuthorized(subject: RequestSubject): Token {
-        LOG.info("generating new token for user with id `${subject.id}`")
-        validateSubject(subject)
-
-        val currentTimeInSecs = TimeUtils.currentTime(TimeUtils.Unit.Seconds)
-        val expiresAt = currentTimeInSecs + duration!!
-
-        val newValidity = repository.create(subject.id, expiresAt)
-
-        val privateKey = readPrivateKey(privateKeyLocation)
-        val claimsBuilder = Jwt.claims()
-        val groups = HashSet<String>()
-        claimsBuilder.issuer(issuer)
-        claimsBuilder.subject(subject.email)
-        claimsBuilder.issuedAt(currentTimeInSecs)
-        claimsBuilder.groups(groups)
-        claimsBuilder.expiresAt(expiresAt)
-        claimsBuilder.claim(VALIDITY_ID_KEY, newValidity.id)
-        return Token(newValidity, claimsBuilder.jws().sign(privateKey))
-    }
-
-    fun getForUserAuthorized(subject: RequestSubject, id: Long): TokenEntity {
-        validateSubject(subject, id)
-        return getForUser(subject.id, id)
-    }
-
-    fun getAllForUserAuthorized(subject: RequestSubject): List<TokenEntity> {
-        validateSubject(subject)
-        return getAllForUser(subject.id)
-    }
-
-    fun getForUser(userId: Long, id: Long): TokenEntity {
-        LOG.info("listing token with id `$id` for user with id `$userId`")
-        deleteExpired()
-        return validateTokenExists(id)
-    }
-
-    fun getAllForUser(userId: Long): List<TokenEntity> {
-        LOG.info("listing tokens for user with id `$userId`")
-        deleteExpired()
-        return repository.listAllForUser(userId)
-    }
-
-    fun deleteForUserAuthorized(subject: RequestSubject, id: Long) {
-        validateSubject(subject, id)
-        deleteForUser(subject.id, id)
-    }
-
-    fun deleteAllForUserAuthorized(subject: RequestSubject) {
-        validateSubject(subject)
-        deleteAllForUser(subject.id)
-    }
-
-    fun deleteForUser(userId: Long, id: Long) {
-        LOG.info("deleting token with id `$id` for user with id `$userId`")
-        repository.deleteForUser(userId, id)
-    }
-
-    fun deleteAllForUser(userId: Long) {
-        LOG.info("deleting all tokens for user with id `$userId`")
-        repository.deleteAllForUser(userId)
-    }
-
-    fun delete(id: Long) {
-        LOG.info("deleting token with id `$id`")
-        repository.delete(id)
-    }
-
-    fun deleteAll() {
-        LOG.info("deleting all tokens")
-        repository.deleteAll()
-    }
-
-    fun deleteExpired() {
-        LOG.info("deleting expired tokens")
-        repository.deleteExpired()
-    }
-
-    fun validate(token: JsonWebToken) {
         LOG.info("validating token")
-        val validity = token.claim<Any>(VALIDITY_ID_KEY)
+        val validity = jwt.claim<Any>(VALIDITY_ID_KEY)
         if (validity.isEmpty) {
             LOG.fatal("token did not contain validity claim")
             throw MissingTokenClaimException()
@@ -190,5 +107,69 @@ class TokenBean {
         if (repository.findById(v) == null) {
             throw TokenInvalidatedException()
         }
+    }
+
+    @Transactional
+    fun createForUser(userId: Long, email: String): Token {
+        LOG.info("generating new token for user with id `$userId`")
+        val currentTimeInSecs = TimeUtils.currentTime(TimeUtils.Unit.Seconds)
+        val expiresAt = currentTimeInSecs + duration!!
+
+        val newValidity = repository.create(userId, expiresAt)
+
+        val privateKey = readPrivateKey(privateKeyLocation)
+        val claimsBuilder = Jwt.claims()
+        val groups = HashSet<String>()
+        claimsBuilder.issuer(issuer)
+        claimsBuilder.subject(email)
+        claimsBuilder.issuedAt(currentTimeInSecs)
+        claimsBuilder.groups(groups)
+        claimsBuilder.expiresAt(expiresAt)
+        claimsBuilder.claim(VALIDITY_ID_KEY, newValidity.id)
+        return Token(newValidity, claimsBuilder.jws().sign(privateKey))
+    }
+
+    @Transactional
+    fun getForUser(userId: Long, id: Long): TokenEntity {
+        LOG.info("listing token with id `$id` for user with id `$userId`")
+        deleteExpired()
+        return validateTokenExists(id)
+    }
+
+    @Transactional
+    fun getAllForUser(userId: Long): List<TokenEntity> {
+        LOG.info("listing tokens for user with id `$userId`")
+        deleteExpired()
+        return repository.listAllForUser(userId)
+    }
+
+    @Transactional
+    fun deleteForUser(userId: Long, id: Long) {
+        LOG.info("deleting token with id `$id` for user with id `$userId`")
+        repository.deleteForUser(userId, id)
+    }
+
+    @Transactional
+    fun deleteAllForUser(userId: Long) {
+        LOG.info("deleting all tokens for user with id `$userId`")
+        repository.deleteAllForUser(userId)
+    }
+
+    @Transactional
+    fun delete(id: Long) {
+        LOG.info("deleting token with id `$id`")
+        repository.delete(id)
+    }
+
+    @Transactional
+    fun deleteAll() {
+        LOG.info("deleting all tokens")
+        repository.deleteAll()
+    }
+
+    @Transactional
+    fun deleteExpired() {
+        LOG.info("deleting expired tokens")
+        repository.deleteExpired()
     }
 }

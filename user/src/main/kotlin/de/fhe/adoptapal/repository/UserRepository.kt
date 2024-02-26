@@ -11,13 +11,14 @@ import java.time.LocalDateTime
 @ApplicationScoped
 class UserRepository: PanacheRepository<UserEntity> {
     @Transactional
-    fun create(username: String, email: String, phoneNumber: String, addressId: Long?): UserEntity {
+    fun create(username: String, email: String, phoneNumber: String, addressId: Long, authId: Long): UserEntity {
         val entity = UserEntity()
 
         entity.username = username
         entity.email = email
         entity.phoneNumber = phoneNumber
         entity.addressId = addressId
+        entity.authId = authId
         entity.createdAt = LocalDateTime.now()
 
         persist(entity)

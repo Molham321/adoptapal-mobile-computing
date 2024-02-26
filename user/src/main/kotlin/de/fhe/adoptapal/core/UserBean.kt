@@ -1,12 +1,12 @@
 package de.fhe.adoptapal.core
 
-import de.fhe.adoptapal.messaging.KafkaProducer
-import de.fhe.adoptapal.model.RequestSubject
-import de.fhe.adoptapal.model.UserEntity
+import de.fhe.adoptapal.model.*
 import de.fhe.adoptapal.repository.UserRepository
+import de.fhe.adoptapal.repository.AddressRepository
 import jakarta.enterprise.context.ApplicationScoped
 import jakarta.inject.Inject
 import jakarta.transaction.Transactional
+import org.eclipse.microprofile.rest.client.inject.RestClient
 import org.jboss.logging.Logger
 
 @ApplicationScoped
@@ -19,19 +19,22 @@ class UserBean {
     private lateinit var repository: UserRepository
 
     @Inject
-    lateinit var producer: KafkaProducer
+    private lateinit var addressRepository: AddressRepository
 
-    private fun validateUserExists(id: Long): UserEntity {
+    @RestClient
+    private lateinit var authService: AuthServiceClient
+
+    fun validateUserExists(id: Long): UserEntity {
         LOG.info("ensuring existence of user with id `$id`")
         return repository.find(id) ?: throw UserNotFoundException.byId(id)
     }
 
-    private fun validateUserExists(email: String): UserEntity {
+    fun validateUserExists(email: String): UserEntity {
         LOG.info("ensuring existence of user with email `$email`")
         return repository.find(email) ?: throw UserNotFoundException.byEmail(email)
     }
 
-    private fun validateEmailUnique(email: String) {
+    fun validateEmailUnique(email: String) {
         LOG.info("ensuring uniqueness of email `$email`")
         if (repository.find(email) != null) {
             throw EmailTakenException(email)
@@ -40,20 +43,19 @@ class UserBean {
         // TODO: ask auth service too
     }
 
-    fun validateSubject(subject: RequestSubject) {
+    fun validateCredentials(credentials: UserCredentials, userId: Long) {
         LOG.info("validating request subject")
-        validateUserExists(subject.id)
-
-        // TODO: ask auth service
+        validateUserExists(userId)
+        authService.isCredentialsValid(userId, credentials.email, credentials.password)
     }
 
     @Transactional
-    fun create(username: String, email: String, password: String, phoneNumber: String, addressId: Long?): UserEntity {
+    fun create(request: CreateUser): UserEntity {
         LOG.info("creating user")
-        validateEmailUnique(email)
-        val entity = repository.create(username, email, phoneNumber, addressId)
-        producer.emitCreateUser(entity.id!!, email, password)
-        return entity
+        validateEmailUnique(request.email)
+        val authUser = authService.create(request.email ,request.password)
+        val address = addressRepository.create(request.address.street, request.address.city, request.address.postalCode)
+        return repository.create(request.username, request.email, request.phoneNumber, address.id!!, authUser.id)
     }
 
     @Transactional
@@ -75,24 +77,17 @@ class UserBean {
     }
 
     @Transactional
-    fun updateAuthorized(subject: RequestSubject, newUsername: String?, newEmail: String?, newPassword: String?, newPhoneNumber: String?) {
-        validateSubject(subject)
-        update(subject.id, newUsername, newEmail, newPassword, newPhoneNumber)
-    }
-
-    @Transactional
-    fun update(id: Long, newUsername: String?, newEmail: String?, newPassword: String?, newPhoneNumber: String?) {
+    fun update(id: Long, request: UpdateUser) {
         LOG.info("updating user with id `$id`")
-        if (newEmail == null || newPassword == null) {
-            producer.emitUpdateUser(id, newEmail, newPassword)
+        val user = validateUserExists(id)
+        if (request.email != null || request.password != null) {
+            authService.update(user.authId!!, AuthUpdateUserRequest(request.email, request.password))
         }
-        repository.update(id, newUsername, newPhoneNumber)
-    }
 
-    @Transactional
-    fun deleteAuthorized(subject: RequestSubject) {
-        validateSubject(subject)
-        delete(subject.id)
+        repository.update(id, request.username, request.phoneNumber)
+        if (request.address != null) {
+            addressRepository.update(user.addressId!!, request.address!!.street, request.address!!.city, request.address!!.postalCode)
+        }
     }
 
     @Transactional

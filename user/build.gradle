@@ -19,8 +19,9 @@ dependencies {
     implementation 'io.quarkus:quarkus-resteasy-reactive'
     implementation 'io.quarkus:quarkus-kotlin'
     implementation 'io.quarkus:quarkus-arc'
+    implementation 'io.quarkus:quarkus-rest-client-reactive-jackson'
 
-    //kafka
+    // kafka
     implementation("io.quarkus:quarkus-smallrye-reactive-messaging-kafka")
 
 

@@ -10,6 +10,7 @@ import io.quarkus.security.jpa.Username
 import jakarta.enterprise.context.ApplicationScoped
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
+import jakarta.persistence.GeneratedValue
 import jakarta.persistence.Id
 import jakarta.transaction.Transactional
 
@@ -17,6 +18,7 @@ import jakarta.transaction.Transactional
 @UserDefinition
 class UserEntity {
     @Id
+    @GeneratedValue
     var id: Long? = null
 
     @Username
@@ -38,9 +40,8 @@ class UserEntity {
 @ApplicationScoped
 class UserRepository: PanacheRepository<UserEntity> {
     @Transactional
-    fun create(id: Long, email: String, password: String, role: UserEntity.Role = UserEntity.Role.USER): UserEntity {
+    fun create(email: String, password: String, role: UserEntity.Role = UserEntity.Role.USER): UserEntity {
         val entity = UserEntity()
-        entity.id = id
         entity.email = email
         entity.password = PasswordUtils.hashPassword(password)
         entity.role = role.name

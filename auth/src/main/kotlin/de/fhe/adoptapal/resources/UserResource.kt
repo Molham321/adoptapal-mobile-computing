@@ -3,11 +3,13 @@ package de.fhe.adoptapal.resources
 import de.fhe.adoptapal.core.UserBean
 import de.fhe.adoptapal.core.mapExceptionToResponse
 import de.fhe.adoptapal.model.*
+import io.quarkus.security.Authenticated
 import jakarta.enterprise.context.RequestScoped
 import jakarta.inject.Inject
 import jakarta.ws.rs.*
 import jakarta.ws.rs.core.MediaType
 import jakarta.ws.rs.core.Response
+import org.eclipse.microprofile.jwt.JsonWebToken
 import org.jboss.logging.Logger
 
 @RequestScoped
@@ -18,6 +20,9 @@ class UserResource {
     companion object {
         private val LOG: Logger = Logger.getLogger(UserResource::class.java)
     }
+
+    @Inject
+    private lateinit var jwt: JsonWebToken
 
     @Inject
     private lateinit var userBean: UserBean
@@ -36,8 +41,10 @@ class UserResource {
 
     @GET
     @Path("/{id}")
+    @Authenticated
     fun get(@PathParam("id") id: Long): Response {
         return try {
+            userBean.validateCredentials(jwt, id)
             val user = userBean.get(id)
             return Response.ok().entity(UserResponse(user.id!!, user.email)).build()
         } catch (e: Exception) {
@@ -48,9 +55,10 @@ class UserResource {
 
     @PUT
     @Path("/{id}")
-    fun update(@PathParam("id") id: Long, request: UpdateUserRequest): Response {
+    fun update(@PathParam("id") id: Long, @BeanParam credentials: UserCredentials, request: UpdateUserRequest): Response {
         return try {
-            userBean.updateAuthorized(RequestSubject(id, request.email, request.password), request.newEmail, request.newPassword, null)
+            userBean.validateCredentials(credentials, id)
+            userBean.update(id, request.email, request.password, null)
             Response.ok().build()
         } catch (e: Exception) {
             LOG.error("failed to update user with id `$id`", e)
@@ -60,12 +68,25 @@ class UserResource {
 
     @DELETE
     @Path("/{id}")
-    fun delete(@PathParam("id") id: Long, request: DeleteUserRequest): Response {
+    fun delete(@PathParam("id") id: Long, @BeanParam credentials: UserCredentials): Response {
         return try {
-            userBean.deleteAuthorized(RequestSubject(id, request.email, request.password))
+            userBean.validateCredentials(credentials, id)
+            userBean.delete(id)
             Response.ok().build()
         } catch (e: Exception) {
             LOG.error("failed to delete user with id `$id`", e)
+            mapExceptionToResponse(e)
+        }
+    }
+
+    @GET
+    @Path("/{userId}/validate")
+    fun validate(@PathParam("userId") userId: Long, @BeanParam credentials: UserCredentials): Response {
+        return try {
+            userBean.validateCredentials(credentials, userId)
+            Response.ok().build()
+        } catch (e: Exception) {
+            LOG.error("failed validation of password for user with id `$userId`", e)
             mapExceptionToResponse(e)
         }
     }

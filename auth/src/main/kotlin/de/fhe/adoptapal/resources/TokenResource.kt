@@ -3,8 +3,7 @@ package de.fhe.adoptapal.resources
 import de.fhe.adoptapal.core.TokenBean
 import de.fhe.adoptapal.core.mapExceptionToResponse
 import de.fhe.adoptapal.model.NewTokenResponse
-import de.fhe.adoptapal.model.RequestSubject
-import de.fhe.adoptapal.model.TokenRequest
+import de.fhe.adoptapal.model.UserCredentials
 import io.quarkus.security.Authenticated
 import org.eclipse.microprofile.jwt.JsonWebToken
 import org.jboss.logging.Logger
@@ -16,6 +15,7 @@ import jakarta.ws.rs.core.Response
 
 @RequestScoped
 @Path("/token")
+@Consumes(MediaType.APPLICATION_JSON)
 @Produces(MediaType.APPLICATION_JSON)
 class TokenResource {
     companion object {
@@ -30,9 +30,10 @@ class TokenResource {
 
     @GET
     @Path("/{userId}/new")
-    fun createForUser(@PathParam("userId") userId: Long, request: TokenRequest): Response {
+    fun createForUser(@PathParam("userId") userId: Long, @BeanParam credentials: UserCredentials): Response {
         return try {
-            val token = tokenBean.createForUserAuthorized(RequestSubject(userId, request.email, request.password))
+            tokenBean.validateCredentials(credentials, userId)
+            val token = tokenBean.createForUser(userId, credentials.email)
             Response.ok(NewTokenResponse(token.token.id!!, token.tokenString, token.token.expiresAt)).build()
         } catch (e: Exception) {
             LOG.info("failed to generate new token for user with id `$userId`", e)
@@ -42,9 +43,11 @@ class TokenResource {
 
     @GET
     @Path("/{userId}/{id}")
-    fun getForUser(@PathParam("userId") userId: Long, @PathParam("id") id: Long, request: TokenRequest): Response {
+    @Authenticated
+    fun getForUser(@PathParam("userId") userId: Long, @PathParam("id") id: Long): Response {
         return try {
-            val token = tokenBean.getForUserAuthorized(RequestSubject(userId, request.email, request.password), id)
+            tokenBean.validateCredentials(jwt, userId)
+            val token = tokenBean.getForUser(userId, id)
             Response.ok(token).build()
         } catch (e: Exception) {
             LOG.error("failed to list tokens for user with id `$userId`", e)
@@ -54,9 +57,11 @@ class TokenResource {
 
     @GET
     @Path("/{userId}/all")
-    fun getAllForUser(@PathParam("userId") userId: Long, request: TokenRequest): Response {
+    @Authenticated
+    fun getAllForUser(@PathParam("userId") userId: Long): Response {
         return try {
-            val tokens = tokenBean.getAllForUserAuthorized(RequestSubject(userId, request.email, request.password))
+            tokenBean.validateCredentials(jwt, userId)
+            val tokens = tokenBean.getAllForUser(userId)
             if (tokens.isNotEmpty()) {
                 Response.ok(tokens).build()
             } else {
@@ -70,9 +75,10 @@ class TokenResource {
 
     @DELETE
     @Path("/{userId}/{id}")
-    fun deleteForUser(@PathParam("userId") userId: Long, @PathParam("id") id: Long, request: TokenRequest): Response {
+    fun deleteForUser(@PathParam("userId") userId: Long, @PathParam("id") id: Long, @BeanParam credentials: UserCredentials): Response {
         return try {
-            tokenBean.deleteForUserAuthorized(RequestSubject(userId, request.email, request.password), id)
+            tokenBean.validateCredentials(credentials, userId)
+            tokenBean.deleteForUser(userId, id)
             Response.ok().build()
         } catch (e: Exception) {
             LOG.error("failed to delete tokens for user with id `$userId`", e)
@@ -82,9 +88,10 @@ class TokenResource {
 
     @DELETE
     @Path("/{userId}/all")
-    fun deleteAllForUser(@PathParam("userId") userId: Long, request: TokenRequest): Response {
+    fun deleteAllForUser(@PathParam("userId") userId: Long, @BeanParam credentials: UserCredentials): Response {
         return try {
-            tokenBean.deleteAllForUserAuthorized(RequestSubject(userId, request.email, request.password))
+            tokenBean.validateCredentials(credentials, userId)
+            tokenBean.deleteAllForUser(userId)
             Response.ok().build()
         } catch (e: Exception) {
             LOG.error("failed to delete tokens for user with id `$userId`", e)
@@ -93,14 +100,14 @@ class TokenResource {
     }
 
     @GET
-    @Path("/validate")
+    @Path("/{userId}/validate")
     @Authenticated
-    fun validate(): Response {
+    fun validate(@PathParam("userId") userId: Long): Response {
         return try {
-            tokenBean.validate(jwt)
+            tokenBean.validateCredentials(jwt, userId)
             Response.ok().build()
         } catch (e: Exception) {
-            LOG.error("failed validation of token for user with email `${jwt.name}`", e)
+            LOG.error("failed validation of token for user with email `$userId`", e)
             mapExceptionToResponse(e)
         }
     }

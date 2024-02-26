@@ -19,6 +19,7 @@ class UserEntity {
     lateinit var phoneNumber: String
 
     var addressId: Long? = null
+    var authId: Long? = null
 
     lateinit var createdAt: LocalDateTime
 }

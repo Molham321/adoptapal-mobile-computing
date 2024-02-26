@@ -2,7 +2,9 @@ package de.fhe.adoptapal.resources
 
 import de.fhe.adoptapal.core.UserBean
 import de.fhe.adoptapal.core.mapExceptionToResponse
-import de.fhe.adoptapal.model.RequestSubject
+import de.fhe.adoptapal.model.CreateUser
+import de.fhe.adoptapal.model.UpdateUser
+import de.fhe.adoptapal.model.UserCredentials
 import jakarta.enterprise.context.RequestScoped
 import jakarta.inject.Inject
 import jakarta.ws.rs.*
@@ -11,7 +13,7 @@ import jakarta.ws.rs.core.Response
 import org.jboss.logging.Logger
 
 @RequestScoped
-@Path("/user")
+@Path("/")
 @Consumes(MediaType.APPLICATION_JSON)
 @Produces(MediaType.APPLICATION_JSON)
 class UserResource {
@@ -23,9 +25,9 @@ class UserResource {
     lateinit var userBean: UserBean
 
     @POST
-    fun createUser(request: CreateUserRequest): Response {
+    fun createUser(request: CreateUser): Response {
         return try {
-            Response.ok(userBean.create(request.username ,request.email, request.password, request.phoneNumber, request.addressId)).build()
+            Response.ok(userBean.create(request)).build()
         } catch (e: Exception) {
             LOG.error("failed to create user", e)
             mapExceptionToResponse(e)
@@ -71,9 +73,10 @@ class UserResource {
 
     @PUT
     @Path("/{id}")
-    fun update(@PathParam("id") id: Long, request: UpdateUserRequest): Response {
+    fun update(@PathParam("id") id: Long, @BeanParam credentials: UserCredentials, request: UpdateUser): Response {
         return try {
-            userBean.updateAuthorized(RequestSubject(id, request.email, request.password), request.newUsername, request.newEmail, request.newPassword, request.newPhoneNumber)
+            userBean.validateCredentials(credentials, id)
+            userBean.update(id, request)
             Response.ok().build()
         } catch (e: Exception) {
             LOG.error("failed to update user with id `$id`", e)
@@ -83,9 +86,10 @@ class UserResource {
 
     @DELETE
     @Path("/{id}")
-    fun delete(@PathParam("id") id: Long, request: DeleteUserRequest): Response {
+    fun delete(@PathParam("id") id: Long, @BeanParam credentials: UserCredentials): Response {
         return try {
-            userBean.deleteAuthorized(RequestSubject(id, request.email, request.password))
+            userBean.validateCredentials(credentials, id)
+            userBean.delete(id)
             Response.ok().build()
         } catch (e: Exception) {
             LOG.error("failed to delete user with id `$id`", e)

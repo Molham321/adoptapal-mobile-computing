@@ -1,9 +1,12 @@
 package de.fhe.adoptapal.model
 
-data class RequestSubject(val id: Long, val email: String, val password: String)
+import jakarta.ws.rs.HeaderParam
 
-class TokenRequest {
+class UserCredentials {
+    @HeaderParam("X-User-Email")
     lateinit var email: String
+
+    @HeaderParam("X-User-Password")
     lateinit var password: String
 }
 
@@ -13,16 +16,8 @@ class CreateUserRequest {
 }
 
 class UpdateUserRequest {
-    lateinit var email: String
-    lateinit var password: String
-
-    var newEmail: String? = null
-    var newPassword: String? = null
-}
-
-class DeleteUserRequest {
-    lateinit var email: String
-    lateinit var password: String
+    var email: String? = null
+    var password: String? = null
 }
 
 data class UserResponse(var id: Long, var email: String)
