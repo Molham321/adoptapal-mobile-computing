@@ -3,11 +3,13 @@ package de.fhe.adoptapal.core
 import de.fhe.adoptapal.model.*
 import de.fhe.adoptapal.repository.UserRepository
 import de.fhe.adoptapal.repository.AddressRepository
+import io.quarkus.rest.client.reactive.QuarkusRestClientBuilder
 import jakarta.enterprise.context.ApplicationScoped
 import jakarta.inject.Inject
 import jakarta.transaction.Transactional
 import org.eclipse.microprofile.rest.client.inject.RestClient
 import org.jboss.logging.Logger
+import java.net.URI
 
 @ApplicationScoped
 class UserBean {
@@ -21,8 +23,9 @@ class UserBean {
     @Inject
     private lateinit var addressRepository: AddressRepository
 
-    @RestClient
-    private lateinit var authService: AuthServiceClient
+    private var authService: AuthServiceClient = QuarkusRestClientBuilder.newBuilder()
+            .baseUri(URI.create("http://auth:8080/"))
+            .build(AuthServiceClient::class.java)
 
     fun validateUserExists(id: Long): UserEntity {
         LOG.info("ensuring existence of user with id `$id`")
@@ -53,7 +56,7 @@ class UserBean {
     fun create(request: CreateUser): UserEntity {
         LOG.info("creating user")
         validateEmailUnique(request.email)
-        val authUser = authService.create(request.email ,request.password)
+        val authUser = authService.create(AuthCreateUserRequest(request.email ,request.password))
         val address = addressRepository.create(request.address.street, request.address.city, request.address.postalCode)
         return repository.create(request.username, request.email, request.phoneNumber, address.id!!, authUser.id)
     }

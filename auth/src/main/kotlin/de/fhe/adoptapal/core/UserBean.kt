@@ -1,8 +1,6 @@
 package de.fhe.adoptapal.core
 
-import de.fhe.adoptapal.model.UserCredentials
-import de.fhe.adoptapal.model.UserEntity
-import de.fhe.adoptapal.model.UserRepository
+import de.fhe.adoptapal.model.*
 import jakarta.enterprise.context.ApplicationScoped
 import jakarta.inject.Inject
 import jakarta.transaction.Transactional
@@ -38,6 +36,8 @@ class UserBean {
         }
     }
 
+    // TODO: ensure user can't update their own role
+
     @Transactional
     fun validateCredentials(credentials: UserCredentials, id: Long) {
         LOG.info("validating request credentials")
@@ -66,12 +66,13 @@ class UserBean {
     }
 
     @Transactional
-    fun create(email: String, password: String, role: UserEntity.Role): UserEntity {
+    fun create(request: CreateUser): UserEntity {
         LOG.info("creating user")
-        validateEmailUnique(email)
-        return repository.create(email, password, role)
+        validateEmailUnique(request.email)
+        return repository.create(request.email, request.password, request.role)
     }
 
+    @Transactional
     fun get(id: Long): UserEntity {
         LOG.info("getting user with id `$id`")
         return validateUserExists(id)
@@ -84,9 +85,9 @@ class UserBean {
     }
 
     @Transactional
-    fun update(id: Long, newEmail: String?, newPassword: String?, newRole: UserEntity.Role?) {
+    fun update(id: Long, request: UpdateUser) {
         LOG.info("updating user with id `$id`")
-        repository.update(id, newEmail, newPassword, newRole)
+        repository.update(id, request.email, request.password, request.role)
     }
 
     @Transactional

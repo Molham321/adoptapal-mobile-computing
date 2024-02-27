@@ -10,14 +10,16 @@ class UserCredentials {
     lateinit var password: String
 }
 
-class CreateUserRequest {
+class CreateUser {
     lateinit var email: String
     lateinit var password: String
+    lateinit var role: UserEntity.Role
 }
 
-class UpdateUserRequest {
+class UpdateUser {
     var email: String? = null
     var password: String? = null
+    var role: UserEntity.Role? = null
 }
 
 data class UserResponse(var id: Long, var email: String)

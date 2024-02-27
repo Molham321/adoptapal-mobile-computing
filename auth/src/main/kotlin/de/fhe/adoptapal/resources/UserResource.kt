@@ -28,13 +28,12 @@ class UserResource {
     private lateinit var userBean: UserBean
 
     @POST
-    @Path("/{id}")
-    fun create(@PathParam("id") id: Long, request: CreateUserRequest): Response {
+    fun create(request: CreateUser): Response {
         return try {
-            userBean.create(id, request.email, request.password, UserEntity.Role.USER)
-            return Response.ok().build()
+            val user = userBean.create(request)
+            return Response.ok(UserResponse(user.id!!, user.email)).build()
         } catch (e: Exception) {
-            LOG.error("failed to create user with id `$id`", e)
+            LOG.error("failed to create user", e)
             mapExceptionToResponse(e)
         }
     }
@@ -55,10 +54,10 @@ class UserResource {
 
     @PUT
     @Path("/{id}")
-    fun update(@PathParam("id") id: Long, @BeanParam credentials: UserCredentials, request: UpdateUserRequest): Response {
+    fun update(@PathParam("id") id: Long, @BeanParam credentials: UserCredentials, request: UpdateUser): Response {
         return try {
             userBean.validateCredentials(credentials, id)
-            userBean.update(id, request.email, request.password, null)
+            userBean.update(id, request)
             Response.ok().build()
         } catch (e: Exception) {
             LOG.error("failed to update user with id `$id`", e)

@@ -43,6 +43,7 @@ class AuthUserCreatedResponse {
     lateinit var email: String
 }
 
+data class AuthCreateUserRequest(val email: String, val password: String)
 data class AuthUpdateUserRequest(val email: String?, val password: String?)
 
 data class ErrorResponse(val reason: String)
