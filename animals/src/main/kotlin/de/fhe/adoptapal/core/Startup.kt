@@ -81,7 +81,8 @@ class Startup {
                     LocalDate.of(2018, 7, 30),
                     2.5f,
                     1,
-                    ""
+                    "",
+                    // image: 1
             )
 
             it.add(
@@ -94,6 +95,7 @@ class Startup {
                     4.8f,
                     1,
                     ""
+                    // image: 2
             )
 
            // it.flush()

@@ -6,17 +6,10 @@ import jakarta.persistence.Entity
 import jakarta.persistence.GeneratedValue
 import jakarta.persistence.Id
 import jakarta.transaction.Transactional
+import org.jboss.resteasy.reactive.multipart.FileUpload
+import java.io.File
 import java.time.LocalDateTime
-
-enum class mediaType {
-    pdf, image, video, unknown
-}
-
-// welche Attribute hier notwendig?
-// Bilder wie speichern?
-// Bilder anhand des Pfades oder der ID finden / im Tier speichern?
-// wo werden MediaEntity Einträge genau gespeichert?
-// gibt der Service bei findByID nur den Dateipfad zurück oder die Datei?
+import java.util.*
 
 @Entity
 class MediaEntity {
@@ -30,10 +23,6 @@ class MediaEntity {
 
     var isDeleted: Boolean = false
 
-    // var user: Long? = null
-
-    // var animal: Long? = null
-
     lateinit var filePath: String
 
     lateinit var mediaType: String
@@ -45,6 +34,8 @@ class MediaRepository: PanacheRepository<MediaEntity> {
     // create media/image --> kafka request (aber trotzdem Endpoint)
     // get media/image --> gibt Bild zurück (id als Pfadparameter)
     // delete media/image --> kafka request
+
+    private var fileStorePath: String = "media-store"
 
     fun add(
         filePath: String,
@@ -63,8 +54,29 @@ class MediaRepository: PanacheRepository<MediaEntity> {
         return mediaEntity
     }
 
-    // braucht hier keine extra Funktion
+    @Transactional
+    fun uploadMedia(file: FileUpload): MediaEntity {
+        val fileType = file.contentType()
+
+        val uploadedFile = file.uploadedFile()?.toFile()
+        val filePath = File(fileStorePath)
+
+        filePath.mkdirs()
+
+        val newFile = File(filePath, UUID.randomUUID().toString())
+
+        uploadedFile?.copyTo(newFile)
+
+        val newMediaEntity = add(newFile.name, fileType)
+
+        return newMediaEntity
+    }
+
     fun findByID(id: Long): MediaEntity? {
         return find("id", id).firstResult();
+    }
+
+    fun deleteByID(id: Long) {
+        delete("id", id)
     }
 }
