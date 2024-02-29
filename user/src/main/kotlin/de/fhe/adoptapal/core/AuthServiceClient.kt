@@ -9,6 +9,7 @@ import jakarta.ws.rs.core.MediaType
 import org.eclipse.microprofile.rest.client.annotation.ClientHeaderParam
 import org.eclipse.microprofile.rest.client.inject.RegisterRestClient
 
+@Path("/auth")
 @Consumes(MediaType.APPLICATION_JSON)
 @Produces(MediaType.APPLICATION_JSON)
 @RegisterRestClient
@@ -19,7 +20,9 @@ interface AuthServiceClient {
 
     @PUT
     @Path("/user/{userId}")
-    fun update(@PathParam("userId") userId: Long, request: AuthUpdateUserRequest)
+    @ClientHeaderParam(name = "X-User-Email", value = ["{email}"])
+    @ClientHeaderParam(name = "X-User-Password", value = ["{password}"])
+    fun update(@PathParam("userId") userId: Long, @NotBody email: String, @NotBody password: String, request: AuthUpdateUserRequest)
 
     @GET
     @Path("/user/{userId}/validate")

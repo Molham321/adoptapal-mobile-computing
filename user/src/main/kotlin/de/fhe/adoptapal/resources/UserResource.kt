@@ -76,7 +76,7 @@ class UserResource {
     fun update(@PathParam("id") id: Long, @BeanParam credentials: UserCredentials, request: UpdateUser): Response {
         return try {
             userBean.validateCredentials(credentials, id)
-            userBean.update(id, request)
+            userBean.update(credentials, id, request)
             Response.ok().build()
         } catch (e: Exception) {
             LOG.error("failed to update user with id `$id`", e)

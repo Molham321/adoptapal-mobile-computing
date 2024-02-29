@@ -69,7 +69,7 @@ class UserBean {
     fun create(request: CreateUser): UserEntity {
         LOG.info("creating user")
         validateEmailUnique(request.email)
-        return repository.create(request.email, request.password, request.role)
+        return repository.create(request.email, request.password, UserEntity.Role.USER)
     }
 
     @Transactional

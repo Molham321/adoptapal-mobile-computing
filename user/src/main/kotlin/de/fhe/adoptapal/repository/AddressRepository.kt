@@ -46,7 +46,7 @@ class AddressRepository : PanacheRepository<AddressEntity> {
         }
 
         fields = fields.substring(2)
-        update("$fields where id = ?id", params)
+        update("$fields where id = :id", params)
     }
 
     @Transactional

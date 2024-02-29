@@ -56,7 +56,7 @@ class UserBean {
     fun create(request: CreateUser): UserEntity {
         LOG.info("creating user")
         validateEmailUnique(request.email)
-        val authUser = authService.create(AuthCreateUserRequest(request.email ,request.password))
+        val authUser = authService.create(AuthCreateUserRequest(request.email, request.password))
         val address = addressRepository.create(request.address.street, request.address.city, request.address.postalCode)
         return repository.create(request.username, request.email, request.phoneNumber, address.id!!, authUser.id)
     }
@@ -80,11 +80,11 @@ class UserBean {
     }
 
     @Transactional
-    fun update(id: Long, request: UpdateUser) {
+    fun update(credentials: UserCredentials, id: Long, request: UpdateUser) {
         LOG.info("updating user with id `$id`")
         val user = validateUserExists(id)
         if (request.email != null || request.password != null) {
-            authService.update(user.authId!!, AuthUpdateUserRequest(request.email, request.password))
+            authService.update(user.authId!!, credentials.email, credentials.password, AuthUpdateUserRequest(request.email, request.password))
         }
 
         repository.update(id, request.username, request.phoneNumber)

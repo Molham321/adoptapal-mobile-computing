@@ -13,7 +13,6 @@ class UserCredentials {
 class CreateUser {
     lateinit var email: String
     lateinit var password: String
-    lateinit var role: UserEntity.Role
 }
 
 class UpdateUser {

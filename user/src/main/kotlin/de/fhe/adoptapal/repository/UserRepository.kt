@@ -50,7 +50,7 @@ class UserRepository: PanacheRepository<UserEntity> {
         // TODO: address id
 
         fields = fields.substring(2)
-        update("$fields where id = ?id", params)
+        update("$fields where id = :id", params)
     }
 
     @Transactional
