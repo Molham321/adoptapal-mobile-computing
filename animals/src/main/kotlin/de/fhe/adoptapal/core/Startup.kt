@@ -23,31 +23,6 @@ class Startup {
 
     @Transactional
     fun loadAnimals(@Observes evt: StartupEvent?) {
-/*        animalRepository.deleteAll()
-
-        animalRepository.add(
-                "Albert",
-                "Albert die schwarze Katze",
-                5,
-                "schwarz",
-                true,
-                "Katze",
-                LocalDate.of(2018, 7, 30),
-                2.5f,
-                ""
-        )
-
-        animalRepository.add(
-                "Daisy",
-                "Daisy die freundliche Dame",
-                3,
-                "braun",
-                false,
-                "Hund",
-                LocalDate.of(2020, 12, 9),
-                4.8f,
-                ""
-        )*/
 
         animalRepository.let {
             it.deleteAll()
@@ -81,8 +56,7 @@ class Startup {
                     LocalDate.of(2018, 7, 30),
                     2.5f,
                     1,
-                    "",
-                    // image: 1
+                    1
             )
 
             it.add(
@@ -94,8 +68,7 @@ class Startup {
                     LocalDate.of(2020, 12, 9),
                     4.8f,
                     1,
-                    ""
-                    // image: 2
+                    2
             )
 
            // it.flush()

@@ -37,9 +37,7 @@ class AnimalEntity {
 
     var weight: Float = 0.0f
 
-    lateinit var imagePath: String
-
-    // var image: Long? = null
+    var image: Long? = null
 }
 
 @Transactional
@@ -54,8 +52,7 @@ class AnimalRepository : PanacheRepository<AnimalEntity> {
         birthday: LocalDate,
         weight: Float,
         owner: Long?,
-        imagePath: String,
-        // image: Long?
+        image: Long?
     ) {
         val animalEntity = AnimalEntity()
         animalEntity.name = name
@@ -66,8 +63,7 @@ class AnimalRepository : PanacheRepository<AnimalEntity> {
         animalEntity.birthday = birthday
         animalEntity.weight = weight
         animalEntity.owner = owner
-        animalEntity.imagePath = imagePath
-        // animalEntity.image = image
+        animalEntity.image = image
 
         animalEntity.createdTimestamp = LocalDateTime.now()
         animalEntity.lastChangeTimestamp = LocalDateTime.now()
