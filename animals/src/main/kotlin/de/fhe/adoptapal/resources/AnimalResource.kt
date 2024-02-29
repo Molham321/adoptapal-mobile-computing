@@ -20,7 +20,7 @@ import org.jboss.logging.Logger
 @Path("/animals")
 class AnimalResource {
     companion object {
-        private val LOG: Logger = Logger.getLogger(ColorResource::class.java)
+        private val LOG: Logger = Logger.getLogger(AnimalResource::class.java)
     }
 
     @Inject
