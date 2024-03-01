@@ -1,20 +1,21 @@
 package de.fhe.adoptapal.resources
 
+import de.fhe.adoptapal.core.AuthServiceClient
 import de.fhe.adoptapal.model.AnimalEntity
 import de.fhe.adoptapal.model.AnimalRepository
 import io.quarkus.arc.ComponentsProvider.LOG
+import io.quarkus.rest.client.reactive.QuarkusRestClientBuilder
+import io.quarkus.security.Authenticated
 import jakarta.enterprise.context.RequestScoped
 import jakarta.inject.Inject
-import jakarta.ws.rs.Consumes
-import jakarta.ws.rs.DELETE
-import jakarta.ws.rs.GET
-import jakarta.ws.rs.POST
-import jakarta.ws.rs.Path
-import jakarta.ws.rs.PathParam
-import jakarta.ws.rs.Produces
+import jakarta.ws.rs.*
+import jakarta.ws.rs.core.Context
+import jakarta.ws.rs.core.HttpHeaders
 import jakarta.ws.rs.core.MediaType
 import jakarta.ws.rs.core.Response
+import org.eclipse.microprofile.jwt.JsonWebToken
 import org.jboss.logging.Logger
+import java.net.URI
 
 @RequestScoped
 @Path("/animals")
@@ -25,6 +26,13 @@ class AnimalResource {
 
     @Inject
     lateinit var animalRepository: AnimalRepository
+
+    @Inject
+    private lateinit var jwt: JsonWebToken
+
+    private var authService: AuthServiceClient = QuarkusRestClientBuilder.newBuilder()
+        .baseUri(URI.create("http://auth:8080/"))
+        .build(AuthServiceClient::class.java)
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
@@ -81,8 +89,19 @@ class AnimalResource {
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    fun createAnimal(newAnimal: AnimalEntity): Response {
+    @Authenticated
+    fun createAnimal(newAnimal: AnimalEntity, @HeaderParam("Authorization") rawToken: String): Response {
         return try {
+            if (rawToken.startsWith("Bearer ")) {
+                try {
+                    authService.isTokenValid(newAnimal.owner!!, rawToken.substringAfter(" "))
+                } catch (e: Exception) {
+                    return Response.status(Response.Status.UNAUTHORIZED).build()
+                }
+            } else {
+                return Response.status(Response.Status.UNAUTHORIZED).build()
+            }
+
             animalRepository.persist(newAnimal)
             LOG.info("Animal created successfully")
             Response.status(Response.Status.CREATED).entity(newAnimal).build()
@@ -94,8 +113,20 @@ class AnimalResource {
 
     @DELETE
     @Path("/{id}")
-    fun deleteAnimal(@PathParam("id") id: Long): Response {
+    @Authenticated
+    fun deleteAnimal(@PathParam("id") id: Long, @HeaderParam("Authorization") rawToken: String): Response {
         return animalRepository.findById(id)?.let { animalEntity ->
+
+            if (rawToken.startsWith("Bearer ")) {
+                try {
+                    authService.isTokenValid(animalEntity.owner!!, rawToken.substringAfter(" "))
+                } catch (e: Exception) {
+                    return Response.status(Response.Status.UNAUTHORIZED).build()
+                }
+            } else {
+                return Response.status(Response.Status.UNAUTHORIZED).build()
+            }
+
             animalRepository.deleteById(id)
             Response.ok().entity("Animal with ID $id deleted").build()
         } ?: Response.status(Response.Status.NOT_FOUND).entity("Animal with ID $id not found").build()
