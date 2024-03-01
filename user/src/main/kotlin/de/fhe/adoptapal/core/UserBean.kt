@@ -32,11 +32,6 @@ class UserBean {
         return repository.find(id) ?: throw UserNotFoundException.byId(id)
     }
 
-    fun validateUserExists(email: String): UserEntity {
-        LOG.info("ensuring existence of user with email `$email`")
-        return repository.find(email) ?: throw UserNotFoundException.byEmail(email)
-    }
-
     fun validateCredentials(credentials: UserCredentials, userId: Long) {
         LOG.info("validating request subject")
         validateUserExists(userId)
@@ -69,12 +64,6 @@ class UserBean {
     fun get(id: Long): UserEntity {
         LOG.info("getting user with id `$id`")
         return validateUserExists(id)
-    }
-
-    @Transactional
-    fun get(email: String): UserEntity {
-        LOG.info("getting user with email `$email`")
-        return validateUserExists(email)
     }
 
     @Transactional

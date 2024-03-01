@@ -64,17 +64,6 @@ class UserResource {
     }
 
     @GET
-    @Path("/email/{email}")
-    fun get(@PathParam("email") email: String): Response {
-        return try {
-            Response.ok(userToResponse(userBean.get(email))).build()
-        } catch (e: Exception) {
-            LOG.error("failed to get user with email `$email`", e)
-            mapExceptionToResponse(e)
-        }
-    }
-
-    @GET
     fun getAll(): Response {
         return try {
             val users = userBean.getAll().map { userToResponse(it) }

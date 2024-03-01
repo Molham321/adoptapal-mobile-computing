@@ -31,9 +31,6 @@ class UserRepository: PanacheRepository<UserEntity> {
     fun find(id: Long): UserEntity? = find("id", id).firstResult()
 
     @Transactional
-    fun find(email: String): UserEntity? = find("email", email).firstResult()
-
-    @Transactional
     fun update(id: Long, newUsername: String?, newPhoneNumber: String?) {
         var fields = ""
         val params = Parameters.with("id", id)
