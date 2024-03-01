@@ -17,6 +17,10 @@ Obwhol Kafka zunächst in Erwägung gezugen wurde, wurde es wegen seiner asynchr
 verwendet. Für die Kommunikation zwischen den Services war zwingend ein Request-Resposne-Modell
 vonnöten. In der Git-History sind Überreste davon zu finden.
 
+### Presistenz
+Wegen Konigurationsschiwrigkeiten ist die Datenhaltung pro Service in-memory mit h2 implementiert.
+Nach Fragen and Freunde und Kommolitonen konnten wir keine Lösung finden, siehe email.
+
 # Präsentationen
 Präsentationen sind im Ordner [presentations][pres] zu finden.
 
