@@ -1,11 +1,10 @@
 package de.fhe.adoptapal.core
 
-import de.fhe.adoptapal.model.TokenEntity
-import de.fhe.adoptapal.model.TokenRepository
-import de.fhe.adoptapal.model.UserEntity
+import de.fhe.adoptapal.model.*
 import io.smallrye.jwt.build.Jwt
 import jakarta.enterprise.context.ApplicationScoped
 import jakarta.inject.Inject
+import jakarta.transaction.Transactional
 import org.eclipse.microprofile.config.inject.ConfigProperty
 import org.eclipse.microprofile.jwt.JsonWebToken
 import org.jboss.logging.Logger
@@ -15,28 +14,18 @@ import java.security.PrivateKey
 import java.security.spec.PKCS8EncodedKeySpec
 import java.util.*
 
-/**
- * Helper class to create valid JWT Tokens
- */
 @ApplicationScoped
-class JwtBean {
-
-    class ValidationException(message: String): Exception(message) {
-        companion object {
-            fun missingClaim(): ValidationException = ValidationException("a token did not contain the validity claim '$VALIDITY_ID_KEY'")
-        }
-    }
-
+class TokenBean {
     data class Token(var token: TokenEntity, var tokenString: String)
 
     companion object {
         const val VALIDITY_ID_KEY = "validityId"
 
-        private val LOG: Logger = Logger.getLogger(JwtBean::class.java)
+        private val LOG: Logger = Logger.getLogger(TokenBean::class.java)
 
         @Throws(java.lang.Exception::class)
         private fun readPrivateKey(pemResName: String): PrivateKey {
-            JwtBean::class.java.getResourceAsStream(pemResName).use { contentIS ->
+            TokenBean::class.java.getResourceAsStream(pemResName).use { contentIS ->
                 val tmp = ByteArray(4096)
                 val length: Int = contentIS!!.read(tmp)
                 return decodePrivateKey(String(tmp, 0, length, Charset.defaultCharset()))
@@ -85,20 +74,54 @@ class JwtBean {
     private var duration: Long? = null
 
     @Inject
-    lateinit var tokenRepository: TokenRepository
+    private lateinit var repository: TokenRepository
 
-    @Throws(java.lang.Exception::class)
-    fun generateToken(userEntity: UserEntity): Token {
+    @Inject
+    private lateinit var userBean: UserBean
+
+    @Transactional
+    fun validateTokenExists(id: Long): TokenEntity {
+        LOG.info("ensuring existence of token with id `$id`")
+        return repository.find(id) ?: throw TokenNotFoundException(id)
+    }
+
+    @Transactional
+    fun validateCredentials(credentials: UserCredentials, userId: Long) {
+        userBean.validateCredentials(credentials, userId)
+    }
+
+    @Transactional
+    fun validateCredentials(jwt: JsonWebToken, userId: Long) {
+        userBean.validateCredentials(jwt, userId)
+
+        LOG.info("validating token")
+        val validity = jwt.claim<Any>(VALIDITY_ID_KEY)
+        if (validity.isEmpty) {
+            LOG.fatal("token did not contain validity claim")
+            throw MissingTokenClaimException()
+        }
+
+        // BUG(erik): we cannot for some reason convert the internal number representation of the claim into a Long
+        // directly, so unfortunately, to get forward, we have to go through a useless string conversion
+        val v = validity.get().toString().toLong()
+        if (repository.findById(v) == null) {
+            throw TokenInvalidatedException()
+        }
+    }
+
+    @Transactional
+    fun createForUser(userId: Long, email: String): Token {
+        LOG.info("generating new token for user with id `$userId`")
         val currentTimeInSecs = TimeUtils.currentTime(TimeUtils.Unit.Seconds)
         val expiresAt = currentTimeInSecs + duration!!
 
-        val newValidity = tokenRepository.create(userEntity.id!!, expiresAt)
+        val newValidity = repository.create(userId, expiresAt)
 
         val privateKey = readPrivateKey(privateKeyLocation)
         val claimsBuilder = Jwt.claims()
         val groups = HashSet<String>()
         claimsBuilder.issuer(issuer)
-        claimsBuilder.subject(userEntity.email)
+        claimsBuilder.subject(email)
         claimsBuilder.issuedAt(currentTimeInSecs)
         claimsBuilder.groups(groups)
         claimsBuilder.expiresAt(expiresAt)
@@ -106,17 +129,47 @@ class JwtBean {
         return Token(newValidity, claimsBuilder.jws().sign(privateKey))
     }
 
-    @Throws(ValidationException::class)
-    fun validate(token: JsonWebToken): Boolean {
-        val validity = token.claim<Any>(VALIDITY_ID_KEY)
-        if (validity.isEmpty) {
-            LOG.fatal("token did not contain validity claim")
-            throw ValidationException.missingClaim()
-        }
+    @Transactional
+    fun getForUser(userId: Long, id: Long): TokenEntity {
+        LOG.info("listing token with id `$id` for user with id `$userId`")
+        deleteExpired()
+        return validateTokenExists(id)
+    }
 
-        // BUG(erik): we cannot for some reason convert the internal number representation of the claim into a Long
-        // directly, so unfortunately, to get forward, we have to go through a useless string conversion
-        val v = validity.get().toString().toLong()
-        return tokenRepository.findById(v) != null
+    @Transactional
+    fun getAllForUser(userId: Long): List<TokenEntity> {
+        LOG.info("listing tokens for user with id `$userId`")
+        deleteExpired()
+        return repository.listAllForUser(userId)
+    }
+
+    @Transactional
+    fun deleteForUser(userId: Long, id: Long) {
+        LOG.info("deleting token with id `$id` for user with id `$userId`")
+        repository.deleteForUser(userId, id)
+    }
+
+    @Transactional
+    fun deleteAllForUser(userId: Long) {
+        LOG.info("deleting all tokens for user with id `$userId`")
+        repository.deleteAllForUser(userId)
+    }
+
+    @Transactional
+    fun delete(id: Long) {
+        LOG.info("deleting token with id `$id`")
+        repository.delete(id)
+    }
+
+    @Transactional
+    fun deleteAll() {
+        LOG.info("deleting all tokens")
+        repository.deleteAll()
+    }
+
+    @Transactional
+    fun deleteExpired() {
+        LOG.info("deleting expired tokens")
+        repository.deleteExpired()
     }
 }

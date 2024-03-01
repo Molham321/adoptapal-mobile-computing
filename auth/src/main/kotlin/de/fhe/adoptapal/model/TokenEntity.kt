@@ -28,30 +28,26 @@ class TokenRepository: PanacheRepository<TokenEntity> {
         tokenEntity.userId = userId
         tokenEntity.expiresAt = expiresAt
 
-        deleteExpired()
         persist(tokenEntity)
         flush()
         return tokenEntity
     }
 
     @Transactional
-    fun listAllForUser(userId: Long): List<TokenEntity> {
-        return list("where userId = :userId", Parameters().and("userId", userId))
-    }
+    fun find(id: Long) = find("id", id).firstResult()
 
     @Transactional
-    fun deleteExpired() {
-        val now = TimeUtils.currentTime(TimeUtils.Unit.Seconds)
-        delete("expiresAt <= :now", Parameters().and("now", now))
-    }
+    fun listAllForUser(userId: Long) = list("where userId = :userId", Parameters().and("userId", userId))
 
     @Transactional
-    fun delete(id: Long) {
-        deleteById(id)
-    }
+    fun delete(id: Long) = deleteById(id)
 
     @Transactional
-    fun deleteAllForUser(userId: Long) {
-        delete("where userId = :userId", Parameters().and("userId", userId))
-    }
+    fun deleteForUser(userId: Long, id: Long) = delete("where id = :id and userId = :userId", Parameters().and("userId", userId).and("id", id))
+
+    @Transactional
+    fun deleteAllForUser(userId: Long) = delete("where userId = :userId", Parameters().and("userId", userId))
+
+    @Transactional
+    fun deleteExpired() = delete("expiresAt <= :now", Parameters().and("now", TimeUtils.currentTime(TimeUtils.Unit.Seconds)))
 }

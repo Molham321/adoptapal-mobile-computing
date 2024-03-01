@@ -2,6 +2,7 @@ package de.fhe.adoptapal.repository
 
 import de.fhe.adoptapal.model.UserEntity
 import io.quarkus.hibernate.orm.panache.kotlin.PanacheRepository
+import io.quarkus.panache.common.Parameters
 import jakarta.enterprise.context.ApplicationScoped
 import jakarta.transaction.Transactional
 import jakarta.xml.bind.ValidationException
@@ -9,79 +10,49 @@ import java.time.LocalDateTime
 
 @ApplicationScoped
 class UserRepository: PanacheRepository<UserEntity> {
-    fun add(
-        username: String,
-        email: String,
-        addressID: Long?,
-        phoneNumber: String?
-    ) {
-        val userEntity = UserEntity()
-        userEntity.username = username
-        userEntity.email = email
-        userEntity.phoneNumber = phoneNumber
+    @Transactional
+    fun create(username: String, email: String, phoneNumber: String, addressId: Long, authId: Long): UserEntity {
+        val entity = UserEntity()
 
-        userEntity.createdTimestamp = LocalDateTime.now()
-        userEntity.lastChangeTimestamp = LocalDateTime.now()
-        userEntity.isDeleted = false
+        entity.username = username
+        entity.email = email
+        entity.phoneNumber = phoneNumber
+        entity.addressId = addressId
+        entity.authId = authId
+        entity.createdAt = LocalDateTime.now()
 
-        userEntity.addressID = addressID
+        persist(entity)
+        flush()
 
-        persist(userEntity)
+        return entity;
     }
-    fun findByEmail(email: String): UserEntity? = find("email", email).firstResult()
 
     @Transactional
-    fun createUser(userEntity: UserEntity) {
-        persist(userEntity)
-    }
+    fun find(id: Long): UserEntity? = find("id", id).firstResult()
+
     @Transactional
-    fun updateUser(userEntity: UserEntity) {
-        userEntity.username?.let {
-            userEntity.email?.let { it1 ->
-                userEntity.phoneNumber?.let { it2 ->
-                    userEntity.id?.let { it3 ->
-                        update(
-                            "username=?1, email=?2, phoneNumber=?3 where id = ?4",
-                            it,
-                            it1,
-                            it2,
-                            it3
-                        )
-                    }
-                }
-            }
-        }
-    }
+    fun find(email: String): UserEntity? = find("email", email).firstResult()
+
     @Transactional
-    fun deleteUser(id: Long) {
-        delete("id", id)
-    }
+    fun update(id: Long, newUsername: String?, newPhoneNumber: String?) {
+        var fields = ""
+        val params = Parameters.with("id", id)
 
-    fun validateUser(user: UserEntity) {
-        if (user.username.isNullOrEmpty() || user.email.isNullOrEmpty()) {
-            throw ValidationException("Username and email are required")
+        newUsername?.let {
+            fields += ", username = :username"
+            params.and("username", it)
         }
-    }
-
-    fun updateExistingUser(existingUser: UserEntity, updatedUser: UserEntity) {
-        existingUser.apply {
-            username = updatedUser.username.takeUnless { it.isNullOrEmpty() } ?: username
-            if (updatedUser.email?.isNotEmpty() == true) {
-                existingUser.id?.let { validateEmailAvailability(it, updatedUser.email!!) }
-                email = updatedUser.email
-            }
-            phoneNumber = updatedUser.phoneNumber.takeUnless { it.isNullOrEmpty() } ?: phoneNumber
-            lastChangeTimestamp = LocalDateTime.now()
-
-            // Todo updtae Address
+        newPhoneNumber?.let {
+            fields += ", phoneNumber = :phoneNumber"
+            params.and("phoneNumber", it)
         }
+
+        // TODO: address id
+
+        fields = fields.substring(2)
+        update("$fields where id = :id", params)
     }
 
-    fun validateEmailAvailability(userId: Long, email: String) {
-        this.findByEmail(email)?.let {
-            if (it.id != userId) {
-                throw ValidationException("Email is already in use by another user")
-            }
-        }
-    }
+    @Transactional
+    fun delete(id: Long) = deleteById(id)
 }

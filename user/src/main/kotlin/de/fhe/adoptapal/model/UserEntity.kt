@@ -1,6 +1,6 @@
 package de.fhe.adoptapal.model
 
-import io.quarkus.security.jpa.Username
+import jakarta.persistence.Column
 import jakarta.persistence.Entity
 import jakarta.persistence.GeneratedValue
 import jakarta.persistence.Id
@@ -12,15 +12,14 @@ class UserEntity {
     @GeneratedValue
     var id: Long? = null
 
-    @Username
-    var username: String? = null
+    @Column(unique = true)
+    lateinit var email: String
 
-    var email: String? = null
-    var phoneNumber: String? = null
+    lateinit var username: String
+    lateinit var phoneNumber: String
 
-    var createdTimestamp: LocalDateTime = LocalDateTime.now()
-    var lastChangeTimestamp: LocalDateTime = LocalDateTime.now()
-    var isDeleted: Boolean = false
+    var addressId: Long? = null
+    var authId: Long? = null
 
-    var addressID: Long? = null
+    lateinit var createdAt: LocalDateTime
 }
