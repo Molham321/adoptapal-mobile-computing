@@ -1,9 +1,6 @@
 package de.fhe.adoptapal.model
 
-import io.quarkus.security.jpa.Username
-import jakarta.persistence.Entity
-import jakarta.persistence.GeneratedValue
-import jakarta.persistence.Id
+import jakarta.persistence.*
 import java.time.LocalDateTime
 
 @Entity
@@ -12,15 +9,12 @@ class UserEntity {
     @GeneratedValue
     var id: Long? = null
 
-    @Username
-    var username: String? = null
+    lateinit var username: String
+    lateinit var phoneNumber: String
 
-    var email: String? = null
-    var phoneNumber: String? = null
+    @OneToOne
+    lateinit var address: AddressEntity
+    var authId: Long? = null
 
-    var createdTimestamp: LocalDateTime = LocalDateTime.now()
-    var lastChangeTimestamp: LocalDateTime = LocalDateTime.now()
-    var isDeleted: Boolean = false
-
-    var addressID: Long? = null
+    lateinit var createdAt: LocalDateTime
 }

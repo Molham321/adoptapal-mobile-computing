@@ -1,18 +1,20 @@
 package de.fhe.adoptapal.resources
 
-import de.fhe.adoptapal.core.PasswordUtils
-import de.fhe.adoptapal.model.TokenRepository
-import de.fhe.adoptapal.model.UserEntity
-import de.fhe.adoptapal.model.UserRepository
+import de.fhe.adoptapal.core.UserBean
+import de.fhe.adoptapal.core.mapExceptionToResponse
+import de.fhe.adoptapal.model.*
+import io.quarkus.security.Authenticated
 import jakarta.enterprise.context.RequestScoped
 import jakarta.inject.Inject
 import jakarta.ws.rs.*
 import jakarta.ws.rs.core.MediaType
 import jakarta.ws.rs.core.Response
+import org.eclipse.microprofile.jwt.JsonWebToken
 import org.jboss.logging.Logger
 
 @RequestScoped
 @Path("/user")
+//@Consumes(MediaType.APPLICATION_JSON)
 @Produces(MediaType.APPLICATION_JSON)
 class UserResource {
     companion object {
@@ -20,106 +22,71 @@ class UserResource {
     }
 
     @Inject
-    private lateinit var userRepository: UserRepository
+    private lateinit var jwt: JsonWebToken
 
     @Inject
-    private lateinit var tokenRepository: TokenRepository
-
-    private fun validatePassword(id: Long, password: String): Response? {
-        LOG.info("validating password for user with id `$id`")
-
-        val user = userRepository.findById(id)
-                ?: return Response.status(Response.Status.NOT_FOUND).entity("User with id `$id` not found").build()
-
-        return if (PasswordUtils.verifyPassword(password, user.password)) {
-            null
-        } else {
-            LOG.warn("failed password validation for user with id `${user.id}`")
-            Response.status(Response.Status.UNAUTHORIZED).build()
-        }
-    }
+    private lateinit var userBean: UserBean
 
     @POST
-    @Path("/{id}")
-    fun createUser(@PathParam("id") id: Long, request: CreateUserRequest): Response {
-        LOG.info("creating user with id `$id`")
+    fun create(request: CreateUser): Response {
         return try {
-            val user = userRepository.create(id, request.email, request.password, UserEntity.Role.USER)
+            val user = userBean.create(request)
             return Response.ok(UserResponse(user.id!!, user.email)).build()
         } catch (e: Exception) {
-            // TODO: handle unique clash differently
-            LOG.error("failed to create user with id `$id`", e)
-            Response.serverError().build()
+            LOG.error("failed to create user", e)
+            mapExceptionToResponse(e)
         }
     }
 
     @GET
     @Path("/{id}")
-    fun getUser(@PathParam("id") id: Long): Response {
-        LOG.info("listing user with id `$id`")
-        val user = userRepository.findById(id)
+    @Authenticated
+    fun get(@PathParam("id") id: Long): Response {
         return try {
-            if (user != null) {
-                Response.ok(UserResponse(user.id!!, user.email)).build()
-            } else {
-                Response.status(Response.Status.NOT_FOUND).entity("User with id `$id` not found").build()
-            }
+            userBean.validateCredentials(jwt, id)
+            val user = userBean.get(id)
+            return Response.ok().entity(UserResponse(user.id!!, user.email)).build()
         } catch (e: Exception) {
             LOG.error("failed to list user with id `$id`", e)
-            Response.serverError().build()
+            mapExceptionToResponse(e)
         }
     }
 
     @PUT
     @Path("/{id}")
-    fun updateUser(@PathParam("id") id: Long, request: UpdateUserRequest): Response {
-        LOG.info("updating user with id `$id`")
+    fun update(@PathParam("id") id: Long, @BeanParam credentials: UserCredentials, request: UpdateUser): Response {
         return try {
-            val e = validatePassword(id, request.password)
-            if (e != null) {
-                return e
-            }
-
-            if (request.newPassword == null && request.newEmail == null || request.newPassword != null && request.newEmail != null) {
-                LOG.error("updated request for user with id `$id` contained zero or more than one update")
-                return Response.status(Response.Status.BAD_REQUEST).entity("Request must have exactly one update").build()
-            }
-
-            // invalidate all previous tokens of this user
-            tokenRepository.deleteAllForUser(id)
-
-            if (request.newPassword != null) {
-                LOG.info("updated password for user with id `$id`")
-                userRepository.updatePassword(id, request.newPassword!!)
-            }
-
-            if (request.newEmail != null) {
-                LOG.info("updated email for user with id `$id`")
-                userRepository.updateEmail(id, request.newEmail!!)
-            }
-
+            userBean.validateCredentials(credentials, id)
+            userBean.update(id, request)
             Response.ok().build()
         } catch (e: Exception) {
             LOG.error("failed to update user with id `$id`", e)
-            Response.serverError().build()
+            mapExceptionToResponse(e)
         }
     }
 
     @DELETE
     @Path("/{id}")
-    fun deleteUser(@PathParam("id") id: Long, request: DeleteUserRequest): Response {
-        LOG.info("deleting user with id `$id`")
+    fun delete(@PathParam("id") id: Long, @BeanParam credentials: UserCredentials): Response {
         return try {
-            val e = validatePassword(id, request.password)
-            if (e != null) {
-                return e
-            }
-
-            userRepository.delete(id)
+            userBean.validateCredentials(credentials, id)
+            userBean.delete(id)
             Response.ok().build()
         } catch (e: Exception) {
             LOG.error("failed to delete user with id `$id`", e)
-            Response.serverError().build()
+            mapExceptionToResponse(e)
+        }
+    }
+
+    @GET
+    @Path("/{userId}/validate")
+    fun validate(@PathParam("userId") userId: Long, @BeanParam credentials: UserCredentials): Response {
+        return try {
+            userBean.validateCredentials(credentials, userId)
+            Response.ok().build()
+        } catch (e: Exception) {
+            LOG.error("failed validation of password for user with id `$userId`", e)
+            mapExceptionToResponse(e)
         }
     }
 }

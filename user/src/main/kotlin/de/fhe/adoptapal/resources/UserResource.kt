@@ -1,124 +1,124 @@
 package de.fhe.adoptapal.resources
 
-import de.fhe.adoptapal.messaging.KafkaProducer
-import de.fhe.adoptapal.model.UserEntity
-import de.fhe.adoptapal.repository.UserRepository
-import io.quarkus.logging.Log
+import de.fhe.adoptapal.core.TokenAuthenticationException
+import de.fhe.adoptapal.core.UserBean
+import de.fhe.adoptapal.core.mapExceptionToResponse
+import de.fhe.adoptapal.model.*
+import io.quarkus.security.Authenticated
 import jakarta.enterprise.context.RequestScoped
 import jakarta.inject.Inject
 import jakarta.ws.rs.*
+import jakarta.ws.rs.core.Context
+import jakarta.ws.rs.core.HttpHeaders
 import jakarta.ws.rs.core.MediaType
 import jakarta.ws.rs.core.Response
-import jakarta.xml.bind.ValidationException
+import org.eclipse.microprofile.jwt.JsonWebToken
 import org.jboss.logging.Logger
 
 @RequestScoped
-@Path("/users")
+@Path("/")
+@Consumes(MediaType.APPLICATION_JSON)
+@Produces(MediaType.APPLICATION_JSON)
 class UserResource {
-
     companion object {
         private val LOG: Logger = Logger.getLogger(UserResource::class.java)
     }
 
     @Inject
-    lateinit var userRepository: UserRepository
+    private lateinit var jwt: JsonWebToken
 
-    // kafka test
     @Inject
-    lateinit var producer: KafkaProducer
+    lateinit var userBean: UserBean
+
+    fun userToResponse(user: UserEntity) = UserResponse(
+        user.id!!,
+        user.username,
+        user.phoneNumber,
+        user.authId!!,
+        AddressResponse(
+            user.address.street,
+            user.address.city,
+            user.address.postalCode,
+        ),
+    )
+
+    @POST
+    fun createUser(request: CreateUser): Response {
+        return try {
+            Response.ok(userToResponse(userBean.create(request))).build()
+        } catch (e: Exception) {
+            LOG.error("failed to create user", e)
+            mapExceptionToResponse(e)
+        }
+    }
 
     @GET
-    @Produces(MediaType.APPLICATION_JSON)
+    @Path("/{id}")
+    fun get(@PathParam("id") id: Long): Response {
+        return try {
+            Response.ok(userToResponse(userBean.get(id))).build()
+        } catch (e: Exception) {
+            LOG.error("failed to get user with id `$id`", e)
+            mapExceptionToResponse(e)
+        }
+    }
+
+    @GET
+    @Path("/email/{email}")
+    fun get(@PathParam("email") email: String): Response {
+        return try {
+            Response.ok(userToResponse(userBean.get(email))).build()
+        } catch (e: Exception) {
+            LOG.error("failed to get user with email `$email`", e)
+            mapExceptionToResponse(e)
+        }
+    }
+
+    @GET
     fun getAll(): Response {
         return try {
-            val users: List<UserEntity> = userRepository.listAll()
+            val users = userBean.getAll().map { userToResponse(it) }
             if (users.isNotEmpty()) {
-                LOG.info("Successfully retrieved all users")
                 Response.ok(users).build()
             } else {
                 Response.status(Response.Status.NO_CONTENT).build()
             }
         } catch (e: Exception) {
-            LOG.error("Failed to get all users", e)
-            Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(e.message).build()
-        }
-    }
-
-    @GET
-    @Path("/{id}")
-    @Produces(MediaType.APPLICATION_JSON)
-    fun getById(@PathParam("id") id: Long): Response {
-        return userRepository.findById(id)?.let {
-            Response.ok(it).build()
-        } ?: Response.status(Response.Status.NOT_FOUND).entity("User with ID $id not found").build()
-    }
-
-    @GET
-    @Path("/email/{email}")
-    @Produces(MediaType.APPLICATION_JSON)
-    fun getByEmail(@PathParam("email") email: String): Response {
-        return userRepository.findByEmail(email)?.let {
-            Response.ok(it).build()
-        } ?: Response.status(Response.Status.NOT_FOUND).entity("User with email $email not found").build()
-    }
-
-    @POST
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
-    fun createUser(newUser: UserEntity): Response {
-        return try {
-            userRepository.validateUser(newUser)
-            userRepository.findByEmail(newUser.email!!)?.let {
-                throw ValidationException("Email is already in use")
-            }
-            userRepository.createUser(newUser)
-            LOG.info("User created successfully")
-
-            // Sende die Benutzer-ID an den Kafka-Kanal für createUser
-            LOG.info("send post to kafka!")
-            producer.sendRegisterPost(newUser.id);
-
-            Response.status(Response.Status.CREATED).entity(newUser).build()
-        } catch (e: ValidationException) {
-            LOG.error("Validation error during user creation", e)
-            Response.status(Response.Status.BAD_REQUEST).entity(e.message).build()
-        } catch (e: Exception) {
-            LOG.error("Failed to create user", e)
-            Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(e.message).build()
+            LOG.error("failed to get all users", e)
+            mapExceptionToResponse(e)
         }
     }
 
     @PUT
     @Path("/{id}")
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
-    fun updateById(@PathParam("id") id: Long, updatedUser: UserEntity): Response {
-        return userRepository.findById(id)?.let { existingUser ->
-            try {
-                userRepository.updateExistingUser(existingUser, updatedUser)
-                userRepository.updateUser(existingUser)
-                Response.ok(existingUser).build()
-            } catch (e: ValidationException) {
-                LOG.error("Validation error during user update", e)
-                Response.status(Response.Status.BAD_REQUEST).entity(e.message).build()
-            } catch (e: Exception) {
-                LOG.error("Failed to update user", e)
-                Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(e.message).build()
+    @Authenticated
+    fun update(@PathParam("id") id: Long, @HeaderParam("Authorization") rawToken: String, request: UpdateUser): Response {
+        return try {
+            val token = if (rawToken.startsWith("Bearer ")) {
+                rawToken.substringAfter(" ")
+            } else {
+                throw TokenAuthenticationException()
             }
-        } ?: Response.status(Response.Status.NOT_FOUND).entity("User with ID $id not found").build()
+
+            userBean.validateCredentials(token, id)
+            userBean.update(id, request)
+            Response.ok().build()
+        } catch (e: Exception) {
+            LOG.error("failed to update user with id `$id`", e)
+            mapExceptionToResponse(e)
+        }
     }
 
     @DELETE
     @Path("/{id}")
-    fun deleteById(@PathParam("id") id: Long): Response {
-        return userRepository.findById(id)?.let { userEntity ->
-
-            // Sende die Benutzer-ID an den Kafka-Kanal für Benutzerlöschung
-            LOG.info("send post to kafka!")
-            producer.sendDeletePost(id);
-
-            userRepository.deleteUser(id)
-            Response.ok(userEntity).build()
-        } ?: Response.status(Response.Status.NOT_FOUND).entity("User with ID $id not found").build()
+    fun delete(@PathParam("id") id: Long, @BeanParam credentials: UserCredentials): Response {
+        return try {
+            userBean.validateCredentials(credentials, id)
+            userBean.delete(credentials, id)
+            Response.ok().build()
+        } catch (e: Exception) {
+            LOG.error("failed to delete user with id `$id`", e)
+            mapExceptionToResponse(e)
+        }
     }
 }
