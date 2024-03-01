@@ -1,7 +1,7 @@
 # Allgemein
 Ein Mobile Computing 2 Projekt von:
-- Anna Lisa Merkel
-- Erik bünnig
+- Anna-Lisa Merkel
+- Erik Bünnig
 - Molham Al-khodari
 
 # Tools
