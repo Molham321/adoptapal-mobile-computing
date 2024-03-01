@@ -31,6 +31,7 @@ class UserResource {
     lateinit var userBean: UserBean
 
     fun userToResponse(user: UserEntity) = UserResponse(
+        user.id!!,
         user.username,
         user.phoneNumber,
         user.authId!!,
@@ -91,11 +92,10 @@ class UserResource {
     @PUT
     @Path("/{id}")
     @Authenticated
-    fun update(@PathParam("id") id: Long, @Context headers: HttpHeaders, request: UpdateUser): Response {
+    fun update(@PathParam("id") id: Long, @HeaderParam("Authorization") rawToken: String, request: UpdateUser): Response {
         return try {
-            val authHeaders = headers.getRequestHeader(HttpHeaders.AUTHORIZATION)
-            val token = if (authHeaders.size == 1 && authHeaders[0].startsWith("Bearer ")) {
-                authHeaders[0].substringAfter(" ")
+            val token = if (rawToken.startsWith("Bearer ")) {
+                rawToken.substringAfter(" ")
             } else {
                 throw TokenAuthenticationException()
             }

@@ -42,6 +42,7 @@ class AuthUserCreatedResponse {
 }
 
 data class UserResponse(
+    var id: Long,
     val username: String,
     val phoneNumber: String,
     val authId: Long,

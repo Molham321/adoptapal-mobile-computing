@@ -16,6 +16,9 @@ class UserBean {
     @Inject
     private lateinit var repository: UserRepository
 
+    @Inject
+    private lateinit var tokenBean: TokenBean
+
     @Transactional
     fun validateUserExists(id: Long): UserEntity {
         LOG.info("ensuring existence of user with id `$id`")
@@ -87,6 +90,7 @@ class UserBean {
     @Transactional
     fun update(id: Long, request: UpdateUser) {
         LOG.info("updating user with id `$id`")
+        tokenBean.deleteAllForUser(id)
         repository.update(id, request.email, request.password, request.role)
     }
 
