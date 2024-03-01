@@ -20,8 +20,6 @@ class CreateUser {
 
 class UpdateUser {
     var username: String? = null
-    var email: String? = null
-    var password: String? = null
     var phoneNumber: String? = null
     var address: UpdateAddress? = null
 }
@@ -43,7 +41,19 @@ class AuthUserCreatedResponse {
     lateinit var email: String
 }
 
+data class UserResponse(
+    val username: String,
+    val phoneNumber: String,
+    val authId: Long,
+    val address: AddressResponse,
+)
+
+data class AddressResponse(
+    val street: String,
+    val city: String,
+    val postalCode: String,
+)
+
 data class AuthCreateUserRequest(val email: String, val password: String)
-data class AuthUpdateUserRequest(val email: String?, val password: String?)
 
 data class ErrorResponse(val reason: String)

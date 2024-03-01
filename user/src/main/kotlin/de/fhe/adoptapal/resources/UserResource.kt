@@ -1,15 +1,18 @@
 package de.fhe.adoptapal.resources
 
+import de.fhe.adoptapal.core.TokenAuthenticationException
 import de.fhe.adoptapal.core.UserBean
 import de.fhe.adoptapal.core.mapExceptionToResponse
-import de.fhe.adoptapal.model.CreateUser
-import de.fhe.adoptapal.model.UpdateUser
-import de.fhe.adoptapal.model.UserCredentials
+import de.fhe.adoptapal.model.*
+import io.quarkus.security.Authenticated
 import jakarta.enterprise.context.RequestScoped
 import jakarta.inject.Inject
 import jakarta.ws.rs.*
+import jakarta.ws.rs.core.Context
+import jakarta.ws.rs.core.HttpHeaders
 import jakarta.ws.rs.core.MediaType
 import jakarta.ws.rs.core.Response
+import org.eclipse.microprofile.jwt.JsonWebToken
 import org.jboss.logging.Logger
 
 @RequestScoped
@@ -22,12 +25,26 @@ class UserResource {
     }
 
     @Inject
+    private lateinit var jwt: JsonWebToken
+
+    @Inject
     lateinit var userBean: UserBean
+
+    fun userToResponse(user: UserEntity) = UserResponse(
+        user.username,
+        user.phoneNumber,
+        user.authId!!,
+        AddressResponse(
+            user.address.street,
+            user.address.city,
+            user.address.postalCode,
+        ),
+    )
 
     @POST
     fun createUser(request: CreateUser): Response {
         return try {
-            Response.ok(userBean.create(request)).build()
+            Response.ok(userToResponse(userBean.create(request))).build()
         } catch (e: Exception) {
             LOG.error("failed to create user", e)
             mapExceptionToResponse(e)
@@ -38,7 +55,7 @@ class UserResource {
     @Path("/{id}")
     fun get(@PathParam("id") id: Long): Response {
         return try {
-            Response.ok(userBean.get(id)).build()
+            Response.ok(userToResponse(userBean.get(id))).build()
         } catch (e: Exception) {
             LOG.error("failed to get user with id `$id`", e)
             mapExceptionToResponse(e)
@@ -49,7 +66,7 @@ class UserResource {
     @Path("/email/{email}")
     fun get(@PathParam("email") email: String): Response {
         return try {
-            Response.ok(userBean.get(email)).build()
+            Response.ok(userToResponse(userBean.get(email))).build()
         } catch (e: Exception) {
             LOG.error("failed to get user with email `$email`", e)
             mapExceptionToResponse(e)
@@ -59,7 +76,7 @@ class UserResource {
     @GET
     fun getAll(): Response {
         return try {
-            val users = userBean.getAll()
+            val users = userBean.getAll().map { userToResponse(it) }
             if (users.isNotEmpty()) {
                 Response.ok(users).build()
             } else {
@@ -73,10 +90,18 @@ class UserResource {
 
     @PUT
     @Path("/{id}")
-    fun update(@PathParam("id") id: Long, @BeanParam credentials: UserCredentials, request: UpdateUser): Response {
+    @Authenticated
+    fun update(@PathParam("id") id: Long, @Context headers: HttpHeaders, request: UpdateUser): Response {
         return try {
-            userBean.validateCredentials(credentials, id)
-            userBean.update(credentials, id, request)
+            val authHeaders = headers.getRequestHeader(HttpHeaders.AUTHORIZATION)
+            val token = if (authHeaders.size == 1 && authHeaders[0].startsWith("Bearer ")) {
+                authHeaders[0].substringAfter(" ")
+            } else {
+                throw TokenAuthenticationException()
+            }
+
+            userBean.validateCredentials(token, id)
+            userBean.update(id, request)
             Response.ok().build()
         } catch (e: Exception) {
             LOG.error("failed to update user with id `$id`", e)
@@ -89,7 +114,7 @@ class UserResource {
     fun delete(@PathParam("id") id: Long, @BeanParam credentials: UserCredentials): Response {
         return try {
             userBean.validateCredentials(credentials, id)
-            userBean.delete(id)
+            userBean.delete(credentials, id)
             Response.ok().build()
         } catch (e: Exception) {
             LOG.error("failed to delete user with id `$id`", e)
