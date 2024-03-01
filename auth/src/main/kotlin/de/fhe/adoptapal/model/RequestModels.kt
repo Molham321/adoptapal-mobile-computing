@@ -18,7 +18,6 @@ class CreateUser {
 class UpdateUser {
     var email: String? = null
     var password: String? = null
-    var role: UserEntity.Role? = null
 }
 
 data class UserResponse(var id: Long, var email: String)

@@ -39,8 +39,6 @@ class UserBean {
         }
     }
 
-    // TODO: ensure user can't update their own role
-
     @Transactional
     fun validateCredentials(credentials: UserCredentials, id: Long) {
         LOG.info("validating request credentials")
@@ -91,7 +89,7 @@ class UserBean {
     fun update(id: Long, request: UpdateUser) {
         LOG.info("updating user with id `$id`")
         tokenBean.deleteAllForUser(id)
-        repository.update(id, request.email, request.password, request.role)
+        repository.update(id, request.email, request.password, null)
     }
 
     @Transactional

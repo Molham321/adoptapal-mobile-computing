@@ -7,7 +7,6 @@ import io.quarkus.rest.client.reactive.QuarkusRestClientBuilder
 import jakarta.enterprise.context.ApplicationScoped
 import jakarta.inject.Inject
 import jakarta.transaction.Transactional
-import org.eclipse.microprofile.rest.client.inject.RestClient
 import org.jboss.logging.Logger
 import java.net.URI
 
@@ -86,6 +85,8 @@ class UserBean {
     @Transactional
     fun delete(credentials: UserCredentials, id: Long) {
         LOG.info("deleting user with id `$id`")
+        val user = validateUserExists(id)
+        addressRepository.delete(user.address.id!!)
         authService.delete(id, credentials.email, credentials.password)
         repository.delete(id)
     }

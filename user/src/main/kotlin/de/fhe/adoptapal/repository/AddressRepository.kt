@@ -25,9 +25,6 @@ class AddressRepository : PanacheRepository<AddressEntity> {
     }
 
     @Transactional
-    fun find(id: Long) = find("id", id).firstResult()
-
-    @Transactional
     fun update(id: Long, newStreet: String?, newCity: String?, newPostalCode: String?) {
         var fields = ""
         val params = Parameters.with("id", id)

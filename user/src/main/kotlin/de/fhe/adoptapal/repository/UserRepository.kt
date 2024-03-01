@@ -44,8 +44,6 @@ class UserRepository: PanacheRepository<UserEntity> {
             params.and("phoneNumber", it)
         }
 
-        // TODO: address id
-
         fields = fields.substring(2)
         update("$fields where id = :id", params)
     }
