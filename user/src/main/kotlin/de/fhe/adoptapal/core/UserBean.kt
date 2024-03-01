@@ -37,28 +37,32 @@ class UserBean {
         return repository.find(email) ?: throw UserNotFoundException.byEmail(email)
     }
 
-    fun validateEmailUnique(email: String) {
-        LOG.info("ensuring uniqueness of email `$email`")
-        if (repository.find(email) != null) {
-            throw EmailTakenException(email)
-        }
-
-        // TODO: ask auth service too
-    }
-
     fun validateCredentials(credentials: UserCredentials, userId: Long) {
         LOG.info("validating request subject")
         validateUserExists(userId)
-        authService.isCredentialsValid(userId, credentials.email, credentials.password)
+        try {
+            authService.isCredentialsValid(userId, credentials.email, credentials.password)
+        } catch (e: Exception) {
+            throw PasswordAuthenticationException()
+        }
+    }
+
+    fun validateCredentials(token: String, userId: Long) {
+        LOG.info("validating request subject")
+        validateUserExists(userId)
+        try {
+            authService.isTokenValid(userId, token)
+        } catch (e: Exception) {
+            throw TokenAuthenticationException()
+        }
     }
 
     @Transactional
     fun create(request: CreateUser): UserEntity {
         LOG.info("creating user")
-        validateEmailUnique(request.email)
         val authUser = authService.create(AuthCreateUserRequest(request.email, request.password))
         val address = addressRepository.create(request.address.street, request.address.city, request.address.postalCode)
-        return repository.create(request.username, request.email, request.phoneNumber, address.id!!, authUser.id)
+        return repository.create(request.username, request.phoneNumber, address, authUser.id)
     }
 
     @Transactional
@@ -80,28 +84,20 @@ class UserBean {
     }
 
     @Transactional
-    fun update(credentials: UserCredentials, id: Long, request: UpdateUser) {
+    fun update(id: Long, request: UpdateUser) {
         LOG.info("updating user with id `$id`")
         val user = validateUserExists(id)
-        if (request.email != null || request.password != null) {
-            authService.update(user.authId!!, credentials.email, credentials.password, AuthUpdateUserRequest(request.email, request.password))
-        }
 
         repository.update(id, request.username, request.phoneNumber)
         if (request.address != null) {
-            addressRepository.update(user.addressId!!, request.address!!.street, request.address!!.city, request.address!!.postalCode)
+            addressRepository.update(user.address.id!!, request.address!!.street, request.address!!.city, request.address!!.postalCode)
         }
     }
 
     @Transactional
-    fun delete(id: Long) {
+    fun delete(credentials: UserCredentials, id: Long) {
         LOG.info("deleting user with id `$id`")
+        authService.delete(id, credentials.email, credentials.password)
         repository.delete(id)
-    }
-
-    @Transactional
-    fun deleteAll() {
-        LOG.info("deleting all users")
-        repository.deleteAll()
     }
 }

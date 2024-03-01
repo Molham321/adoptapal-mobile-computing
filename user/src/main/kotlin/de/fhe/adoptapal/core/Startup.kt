@@ -61,8 +61,6 @@ class Startup {
 
     @Transactional
     fun loadUsersAndAddresses(@Observes evt: StartupEvent?) {
-        userBean.deleteAll()
-
         userBean.create(scott)
         userBean.create(john)
         userBean.create(alice)

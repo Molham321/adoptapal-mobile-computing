@@ -1,7 +1,6 @@
 package de.fhe.adoptapal.core
 
 import de.fhe.adoptapal.model.AuthCreateUserRequest
-import de.fhe.adoptapal.model.AuthUpdateUserRequest
 import de.fhe.adoptapal.model.AuthUserCreatedResponse
 import io.quarkus.rest.client.reactive.NotBody
 import jakarta.ws.rs.*
@@ -18,11 +17,16 @@ interface AuthServiceClient {
     @Path("/user")
     fun create(request: AuthCreateUserRequest): AuthUserCreatedResponse
 
-    @PUT
+    @DELETE
     @Path("/user/{userId}")
     @ClientHeaderParam(name = "X-User-Email", value = ["{email}"])
     @ClientHeaderParam(name = "X-User-Password", value = ["{password}"])
-    fun update(@PathParam("userId") userId: Long, @NotBody email: String, @NotBody password: String, request: AuthUpdateUserRequest)
+    fun delete(@PathParam("userId") userId: Long, @NotBody email: String, @NotBody password: String)
+
+    @GET
+    @Path("/token/{userId}/validate")
+    @ClientHeaderParam(name = "Authorization", value = ["Bearer {token}"])
+    fun isTokenValid(@PathParam("userId") userId: Long, @NotBody token: String)
 
     @GET
     @Path("/user/{userId}/validate")

@@ -1,5 +1,6 @@
 package de.fhe.adoptapal.repository
 
+import de.fhe.adoptapal.model.AddressEntity
 import de.fhe.adoptapal.model.UserEntity
 import io.quarkus.hibernate.orm.panache.kotlin.PanacheRepository
 import io.quarkus.panache.common.Parameters
@@ -11,14 +12,13 @@ import java.time.LocalDateTime
 @ApplicationScoped
 class UserRepository: PanacheRepository<UserEntity> {
     @Transactional
-    fun create(username: String, email: String, phoneNumber: String, addressId: Long, authId: Long): UserEntity {
+    fun create(username: String, phoneNumber: String, address: AddressEntity, authId: Long): UserEntity {
         val entity = UserEntity()
 
         entity.username = username
-        entity.email = email
         entity.phoneNumber = phoneNumber
-        entity.addressId = addressId
         entity.authId = authId
+        entity.address = address
         entity.createdAt = LocalDateTime.now()
 
         persist(entity)
