@@ -2,6 +2,7 @@ package de.fhe.adoptapal.repository
 
 import de.fhe.adoptapal.model.AddressEntity
 import io.quarkus.hibernate.orm.panache.kotlin.PanacheRepository
+import io.quarkus.panache.common.Parameters
 import jakarta.enterprise.context.ApplicationScoped
 import jakarta.transaction.Transactional
 import java.time.LocalDateTime
@@ -9,45 +10,45 @@ import java.time.LocalDateTime
 @ApplicationScoped
 class AddressRepository : PanacheRepository<AddressEntity> {
     @Transactional
-    fun add(
-        street: String,
-        city: String,
-        postalCode: String
-    ): AddressEntity {
-        val addressEntity = AddressEntity()
-        addressEntity.street = street
-        addressEntity.city = city
-        addressEntity.postalCode = postalCode
+    fun create(street: String, city: String, postalCode: String): AddressEntity {
+        val entity = AddressEntity()
+        entity.street = street
+        entity.city = city
+        entity.postalCode = postalCode
 
-        addressEntity.createdTimestamp = LocalDateTime.now()
-        addressEntity.lastChangeTimestamp = LocalDateTime.now()
-        addressEntity.isDeleted = false
+        entity.createdAt = LocalDateTime.now()
 
-        persist(addressEntity)
-        return addressEntity
+        persist(entity)
+        flush()
+
+        return entity
     }
 
     @Transactional
-    fun updateAddress(addressEntity: AddressEntity) {
-        addressEntity.street?.let {
-            addressEntity.city?.let { it1 ->
-                addressEntity.postalCode?.let { it2 ->
-                    addressEntity.id?.let { it3 ->
-                        update(
-                            "street=?1, city=?2, postalCode=?3 where id = ?4",
-                            it,
-                            it1,
-                            it2,
-                            it3
-                        )
-                    }
-                }
-            }
+    fun find(id: Long) = find("id", id).firstResult()
+
+    @Transactional
+    fun update(id: Long, newStreet: String?, newCity: String?, newPostalCode: String?) {
+        var fields = ""
+        val params = Parameters.with("id", id)
+
+        newStreet?.let {
+            fields += ", street = :street"
+            params.and("street", it)
         }
+        newCity?.let {
+            fields += ", city = :city"
+            params.and("city", it)
+        }
+        newPostalCode?.let {
+            fields += ", postalCode = :postalCode"
+            params.and("postalCode", it)
+        }
+
+        fields = fields.substring(2)
+        update("$fields where id = :id", params)
     }
 
     @Transactional
-    fun deleteAddress(id: Long) {
-        deleteById(id);
-    }
+    fun delete(id: Long) = deleteById(id)
 }

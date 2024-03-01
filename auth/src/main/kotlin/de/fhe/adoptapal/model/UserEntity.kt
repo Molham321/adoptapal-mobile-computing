@@ -10,6 +10,7 @@ import io.quarkus.security.jpa.Username
 import jakarta.enterprise.context.ApplicationScoped
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
+import jakarta.persistence.GeneratedValue
 import jakarta.persistence.Id
 import jakarta.transaction.Transactional
 
@@ -17,6 +18,7 @@ import jakarta.transaction.Transactional
 @UserDefinition
 class UserEntity {
     @Id
+    @GeneratedValue
     var id: Long? = null
 
     @Username
@@ -29,65 +31,54 @@ class UserEntity {
     @Roles
     lateinit var role: String
 
-    override fun toString(): String {
-        return "User(id=$id, email=$email, password=$password, role=$role)"
-    }
-
-    class Role {
-        companion object {
-            const val USER: String = "user"
-            const val ADMIN: String = "admin"
-        }
+    enum class Role {
+        USER,
+        ADMIN,
     }
 }
 
 @ApplicationScoped
 class UserRepository: PanacheRepository<UserEntity> {
     @Transactional
-    fun create(id: Long, email: String, password: String, role: String = UserEntity.Role.USER): UserEntity {
-        val userEntity = UserEntity()
-        userEntity.id = id
-        userEntity.email = email
-        userEntity.password = PasswordUtils.hashPassword(password)
-        userEntity.role = role
+    fun create(email: String, password: String, role: UserEntity.Role = UserEntity.Role.USER): UserEntity {
+        val entity = UserEntity()
+        entity.email = email
+        entity.password = PasswordUtils.hashPassword(password)
+        entity.role = role.name
 
-        persist(userEntity)
+        persist(entity)
         flush()
-        return userEntity
+        return entity
     }
 
     @Transactional
-    fun updateEmail(id: Long, email: String) {
-        update(
-                "email=:email where id=:id",
-                Parameters()
-                        .and("email", email)
-                        .and("id", id)
-        )
+    fun find(id: Long): UserEntity? = find("id", id).firstResult()
+
+    @Transactional
+    fun find(email: String): UserEntity? = find("email", email).firstResult()
+
+    @Transactional
+    fun update(id: Long, newEmail: String?, newPassword: String?, newRole: UserEntity.Role?) {
+        var fields = ""
+        val params = Parameters.with("id", id)
+
+        newEmail?.let {
+            fields += ", email = :email"
+            params.and("email", it)
+        }
+        newPassword?.let {
+            fields += ", password = :password"
+            params.and("password", PasswordUtils.hashPassword(it))
+        }
+        newRole?.let {
+            fields += ", role = :role"
+            params.and("role", it.name)
+        }
+
+        fields = fields.substring(2)
+        update("$fields where id = :id", params)
     }
 
     @Transactional
-    fun updatePassword(id: Long, password: String) {
-        update(
-            "password=:password where id=:id",
-            Parameters()
-                .and("password", PasswordUtils.hashPassword(password))
-                .and("id", id)
-        )
-    }
-
-    @Transactional
-    fun updateRole(id: Long, role: String) {
-        update(
-            "role=:role where id=:id",
-            Parameters()
-                .and("role", role)
-                .and("id", id)
-        )
-    }
-
-    @Transactional
-    fun delete(id: Long) {
-        deleteById(id)
-    }
+    fun delete(id: Long) = deleteById(id)
 }
