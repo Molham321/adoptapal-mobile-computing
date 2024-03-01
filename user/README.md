@@ -12,7 +12,6 @@ If you want to learn more about Quarkus, please visit its website: https://quark
 
 Beispielantwort:
 ```json
-
 [
     {
         "address": {
