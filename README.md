@@ -1,4 +1,4 @@
-#Allgemein
+# Allgemein
 
 Ein Mobile Computing 2 Projekt von:
 
@@ -7,21 +7,21 @@ Ein Mobile Computing 2 Projekt von:
 - Molham Al-khodari
 
 
-#Tools
--   IntelliJ
--   Docker
--   Gitlab
--   Discord
+# Tools
+- IntelliJ
+- Docker
+- Gitlab
+- Discord
 
-#Präsentationen
+# Präsentationen
 
-#Microservices
+# Microservices
 
-##Auth Service
+## Auth Service
 Aufgaben:
 
-##User Service
+## User Service
 Aufgaben:
 
-##Animals Service
+## Animals Service
 Aufgaben:
