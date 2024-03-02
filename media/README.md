@@ -10,7 +10,7 @@ Wird in der Anwendung beispielsweise zu einem neu-angelegte Tier ein Bild gespei
 
 **Bild Abrufen via ID (GET)**
 
-http://localhost:80/media/media/1
+> http://localhost:80/media/media/1
 
 Beispielantwort:
 
@@ -18,7 +18,7 @@ Beispielantwort:
 
 **Medien-Eintrag und Bild erstellen (POST)**
 
-http://localhost:80/media/media/upload
+> http://localhost:80/media/media/upload
 
 Beispiel-Eingabe-Form-Data (File):
 
@@ -30,7 +30,7 @@ Beispielantwort:
 
 **Medien-Eintrag und Bild löschen (DELETE)**
 
-http://localhost:80/media/media/delete/1
+> http://localhost:80/media/media/delete/1
 
 Beispielantwort:
 
