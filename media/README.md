@@ -1,61 +1,37 @@
-# media
+# Media Service
 
-This project uses Quarkus, the Supersonic Subatomic Java Framework.
+Der Media Service kümmert sich um das Speichern beliebiger Bilddateien. 
 
-If you want to learn more about Quarkus, please visit its website: https://quarkus.io/ .
+Beim Hochladen und Speichern eines Bildes, erhält dieses zusätzlich einen Datenbankeintrag, in dem es mit einer ID, einem Speicherpfad und zusätzlichen Metadaten versehen wird, um es zukünftig einfach wiederzufinden.
 
-## Running the application in dev mode
+Wird in der Anwendung beispielsweise zu einem neu-angelegte Tier ein Bild gespeichert, speichert das Tier in seinem Datenbank-Eintrag lediglich die ID des Bildes. Mit der ID kann das Bild später einfach per GET-Request abgerufen werden.
 
-You can run your application in dev mode that enables live coding using:
-```shell script
-./gradlew quarkusDev
-```
+## REST Endpunkte
 
-> **_NOTE:_**  Quarkus now ships with a Dev UI, which is available in dev mode only at http://localhost:8080/q/dev/.
+**Bild Abrufen via ID (GET)**
 
-## Packaging and running the application
+http://localhost:80/media/media/1
 
-The application can be packaged using:
-```shell script
-./gradlew build
-```
-It produces the `quarkus-run.jar` file in the `build/quarkus-app/` directory.
-Be aware that it’s not an _über-jar_ as the dependencies are copied into the `build/quarkus-app/lib/` directory.
+Beispielantwort:
 
-The application is now runnable using `java -jar build/quarkus-app/quarkus-run.jar`.
++ gespeicherte Bild-Datei
 
-If you want to build an _über-jar_, execute the following command:
-```shell script
-./gradlew build -Dquarkus.package.type=uber-jar
-```
+**Medien-Eintrag und Bild erstellen (POST)**
 
-The application, packaged as an _über-jar_, is now runnable using `java -jar build/*-runner.jar`.
+http://localhost:80/media/media/upload
 
-## Creating a native executable
+Beispiel-Eingabe-Form-Data (File):
 
-You can create a native executable using: 
-```shell script
-./gradlew build -Dquarkus.package.type=native
-```
++ beliebige Bild-Datei
 
-Or, if you don't have GraalVM installed, you can run the native executable build in a container using: 
-```shell script
-./gradlew build -Dquarkus.package.type=native -Dquarkus.native.container-build=true
-```
+Beispielantwort:
 
-You can then execute your native executable with: `./build/media-1.0.0-SNAPSHOT-runner`
+    {}
 
-If you want to learn more about building native executables, please consult https://quarkus.io/guides/gradle-tooling.
+**Medien-Eintrag und Bild löschen (DELETE)**
 
-## Related Guides
+http://localhost:80/media/media/delete/1
 
-- RESTEasy Reactive ([guide](https://quarkus.io/guides/resteasy-reactive)): A Jakarta REST implementation utilizing build time processing and Vert.x. This extension is not compatible with the quarkus-resteasy extension, or any of the extensions that depend on it.
-- Kotlin ([guide](https://quarkus.io/guides/kotlin)): Write your services in Kotlin
+Beispielantwort:
 
-## Provided Code
-
-### RESTEasy Reactive
-
-Easily start your Reactive RESTful Web Services
-
-[Related guide section...](https://quarkus.io/guides/getting-started-reactive#reactive-jax-rs-resources)
+    {}
