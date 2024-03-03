@@ -1,6 +1,7 @@
 package de.fhe.adoptapal.core
 
 import de.fhe.adoptapal.model.*
+import de.fhe.adoptapal.repository.TokenRepository
 import io.smallrye.jwt.build.Jwt
 import jakarta.enterprise.context.ApplicationScoped
 import jakarta.inject.Inject
