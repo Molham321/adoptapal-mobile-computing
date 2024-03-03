@@ -82,3 +82,10 @@ data class ColorResponse(
     val name: String,
     var createdTimestamp: LocalDateTime,
 )
+
+/**
+ * Data class representing the response body for an error.
+ *
+ * @property reason The reason for the error.
+ */
+data class ErrorResponse(val reason: String)

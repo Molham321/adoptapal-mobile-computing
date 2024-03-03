@@ -71,7 +71,7 @@ class AnimalResource {
                 Response.ok(animalEntities).build()
             } catch (e: Exception) {
                 LOG.error("failed to get all animals", e)
-                Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(e.message).build()
+                Response.serverError().build()
             }
         } else {
             Response.status(Response.Status.NO_CONTENT).build()
@@ -92,7 +92,7 @@ class AnimalResource {
         return if (animalEntity != null) {
             Response.ok(animalEntity).build()
         } else {
-            Response.status(Response.Status.NOT_FOUND).entity("Animal with ID $id not found").build()
+            Response.status(Response.Status.NOT_FOUND).entity(ErrorResponse("Animal with ID $id not found")).build()
         }
     }
 
@@ -116,7 +116,7 @@ class AnimalResource {
             }
         } catch (e: Exception) {
             LOG.error("failed to get animals by owner", e)
-            Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(e.message).build()
+            Response.serverError().build()
         }
     }
 
@@ -156,7 +156,7 @@ class AnimalResource {
             Response.status(Response.Status.CREATED).entity(entityToResponse(entity)).build()
         } catch (e: Exception) {
             LOG.error("Failed to create animal", e)
-            Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(e.message).build()
+            Response.serverError().build()
         }
     }
 
@@ -174,7 +174,7 @@ class AnimalResource {
         return animalRepository.findById(id)?.let { animalEntity ->
             if (rawToken.startsWith("Bearer ")) {
                 try {
-                    authService.isTokenValid(animalEntity.owner!!, rawToken.substringAfter(" "))
+                    authService.isTokenValid(animalEntity.owner, rawToken.substringAfter(" "))
                 } catch (e: Exception) {
                     return Response.status(Response.Status.UNAUTHORIZED).build()
                 }
@@ -184,6 +184,6 @@ class AnimalResource {
 
             animalRepository.deleteById(id)
             Response.ok().entity("Animal with ID $id deleted").build()
-        } ?: Response.status(Response.Status.NOT_FOUND).entity("Animal with ID $id not found").build()
+        } ?: Response.status(Response.Status.NOT_FOUND).entity(ErrorResponse("Animal with ID $id not found")).build()
     }
 }

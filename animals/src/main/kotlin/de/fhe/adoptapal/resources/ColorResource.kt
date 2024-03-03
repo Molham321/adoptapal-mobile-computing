@@ -2,6 +2,7 @@ package de.fhe.adoptapal.resources
 
 import de.fhe.adoptapal.model.ColorResponse
 import de.fhe.adoptapal.model.ColorEntity
+import de.fhe.adoptapal.model.ErrorResponse
 import de.fhe.adoptapal.repository.ColorRepository
 import jakarta.enterprise.context.RequestScoped
 import jakarta.inject.Inject
@@ -52,7 +53,7 @@ class ColorResource {
             }
         } catch (e: Exception) {
             LOG.error("failed to get all colors", e)
-            Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(e.message).build()
+            Response.serverError().build()
         }
     }
 
@@ -70,7 +71,7 @@ class ColorResource {
         return if (entity != null) {
             Response.ok(entityToResponse(entity)).build()
         } else {
-            Response.status(Response.Status.NOT_FOUND).entity("Color with ID $id not found").build()
+            Response.status(Response.Status.NOT_FOUND).entity(ErrorResponse("Color with ID $id not found")).build()
         }
     }
 }

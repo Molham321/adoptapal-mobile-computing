@@ -2,6 +2,7 @@ package de.fhe.adoptapal.resources
 
 import de.fhe.adoptapal.model.CategoryResponse
 import de.fhe.adoptapal.model.CategoryEntity
+import de.fhe.adoptapal.model.ErrorResponse
 import de.fhe.adoptapal.repository.CategoryRepository
 import jakarta.enterprise.context.RequestScoped
 import jakarta.inject.Inject
@@ -60,7 +61,7 @@ class CategoryResource {
             }
         } catch (e: Exception) {
             LOG.error("failed to get all animal categories", e)
-            Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(e.message).build()
+            Response.serverError().build()
         }
     }
 
@@ -83,7 +84,7 @@ class CategoryResource {
         return if (entity != null) {
             Response.ok(entityToResponse(entity)).build()
         } else {
-            Response.status(Response.Status.NOT_FOUND).entity("Animal category with ID $id not found").build()
+            Response.status(Response.Status.NOT_FOUND).entity(ErrorResponse("Animal category with ID $id not found")).build()
         }
     }
 }
