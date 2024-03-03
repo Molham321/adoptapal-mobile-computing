@@ -1,61 +1,92 @@
 # animals
 
-This project uses Quarkus, the Supersonic Subatomic Java Framework.
+Der Animals Service kümmert sich um das Speichern und Bereitstellen von Tierdaten der zur Adoption verfügbaren Tiere.
 
-If you want to learn more about Quarkus, please visit its website: https://quarkus.io/ .
+Tiere können sowohl anhand ihrer ID als auch anhand der ID des Nutzers, der es hochgeladen hat, gefunden werden. Über entsprechende Anfragen an den Auth Service wird sichergestellt, dass nur angemeldete Nutzer Tierdaten hochladen können und nur der Besitzer des Tieres es löschen kann.
 
-## Running the application in dev mode
+Desweiteren werden die Werte der Parameter "Colors" und "Animal Categories" in separaten Tabellen gespeichert, wodurch diese auch unabhängig von den Tierdaten abgefragt werden können.
 
-You can run your application in dev mode that enables live coding using:
-```shell script
-./gradlew quarkusDev
-```
+## REST Endpunkte
 
-> **_NOTE:_**  Quarkus now ships with a Dev UI, which is available in dev mode only at http://localhost:8080/q/dev/.
+**Alle Tiere abrufen (GET)**
 
-## Packaging and running the application
+> http://localhost:80/animals/animals
 
-The application can be packaged using:
-```shell script
-./gradlew build
-```
-It produces the `quarkus-run.jar` file in the `build/quarkus-app/` directory.
-Be aware that it’s not an _über-jar_ as the dependencies are copied into the `build/quarkus-app/lib/` directory.
+Beispielantwort:
 
-The application is now runnable using `java -jar build/quarkus-app/quarkus-run.jar`.
+    {}
 
-If you want to build an _über-jar_, execute the following command:
-```shell script
-./gradlew build -Dquarkus.package.type=uber-jar
-```
+**Tier abrufen via ID (GET)**
 
-The application, packaged as an _über-jar_, is now runnable using `java -jar build/*-runner.jar`.
+> http://localhost:80/animals/animals/1
 
-## Creating a native executable
+Beispielantwort:
 
-You can create a native executable using: 
-```shell script
-./gradlew build -Dquarkus.package.type=native
-```
+    {}
 
-Or, if you don't have GraalVM installed, you can run the native executable build in a container using: 
-```shell script
-./gradlew build -Dquarkus.package.type=native -Dquarkus.native.container-build=true
-```
+**Tier abrufen via OwnerID (GET)**
 
-You can then execute your native executable with: `./build/animals-1.0.0-SNAPSHOT-runner`
+> http://localhost:80/animals/animals/owner/1
 
-If you want to learn more about building native executables, please consult https://quarkus.io/guides/gradle-tooling.
+Beispielantwort:
 
-## Related Guides
+**Tier erstellen (POST)**
 
-- RESTEasy Reactive ([guide](https://quarkus.io/guides/resteasy-reactive)): A Jakarta REST implementation utilizing build time processing and Vert.x. This extension is not compatible with the quarkus-resteasy extension, or any of the extensions that depend on it.
-- Kotlin ([guide](https://quarkus.io/guides/kotlin)): Write your services in Kotlin
+> http://localhost:80/animals/animals
 
-## Provided Code
+Beispiel-Eingabe-JSON:
 
-### RESTEasy Reactive
+    {
+        "name": "Chom-Chom",
+        "description": "merkwürdiger Wurm",
+        "color": 11,
+        "male": true,
+        "animalCategory": 7,
+        "birthday": "2023-12-31",
+        "weight": 2.6,
+        "owner": 1
+    }
 
-Easily start your Reactive RESTful Web Services
+Beispielantwort:
 
-[Related guide section...](https://quarkus.io/guides/getting-started-reactive#reactive-jax-rs-resources)
+    {}
+
+**Tier löschen (DELETE)**
+
+> http://localhost:80/animals/animals/3
+
+Beispielantwort:
+
+    {}
+
+**Alle Farben abrufen (GET)**
+
+> http://localhost:80/animals/animals/colors
+
+Beispielantwort:
+
+    {}
+
+**Farbe abrufen via ID (GET)**
+
+> http://localhost:80/animals/animals/colors/1
+
+Beispielantwort:
+
+    {}
+
+**Alle Tier-Kategorien abrufen (GET)**
+
+> http://localhost:80/animals/animals/animalCategories
+
+Beispielantwort:
+
+    {}
+
+**Tier-Kategorie abrufen via ID (GET)**
+
+> http://localhost:80/animals/animals/animalCategories/1
+
+Beispielantwort:
+
+    {}
