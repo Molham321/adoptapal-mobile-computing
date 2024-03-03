@@ -22,7 +22,7 @@ Beispielantwort:
 
 Beispiel-Eingabe-Form-Data (File):
 
-+ beliebige Bild-Datei
++ beliebige Bild-Datei (muss beim Importieren des Workspaces neu hinzugefügt werden)
 
 Beispielantwort:
 
