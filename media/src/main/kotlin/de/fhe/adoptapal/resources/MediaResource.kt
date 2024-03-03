@@ -1,7 +1,7 @@
 package de.fhe.adoptapal.resources
 
 import de.fhe.adoptapal.model.MediaEntity
-import de.fhe.adoptapal.model.MediaRepository
+import de.fhe.adoptapal.repository.MediaRepository
 import jakarta.enterprise.context.RequestScoped
 import jakarta.inject.Inject
 import jakarta.ws.rs.*
@@ -13,6 +13,16 @@ import org.jboss.resteasy.reactive.RestForm
 import org.jboss.resteasy.reactive.multipart.FileUpload
 import java.io.File
 
+/**
+ * Resource class for handling media-related operations.
+ *
+ * This class provides endpoints for retrieving, uploading, and deleting media files.
+ * Media files are stored in a designated file store path, and their metadata is managed
+ * by the associated [MediaRepository].
+ *
+ * @property mediaRepository Injected instance of [MediaRepository] for accessing media-related data.
+ * @property fileStorePath The path to the directory where media files are stored.
+ */
 @RequestScoped
 @Path("/media")
 class MediaResource {
@@ -25,6 +35,13 @@ class MediaResource {
 
     private var fileStorePath: String = "media-store"
 
+    /**
+     * Retrieves a media file by its ID.
+     *
+     * @param id The ID of the media file.
+     * @return A [Response] containing the media file as an octet stream if found,
+     *         or a 404 Not Found response if the media file does not exist.
+     */
     @GET
     @Path("/{id}")
     @Produces(MediaType.APPLICATION_OCTET_STREAM)
@@ -43,6 +60,13 @@ class MediaResource {
         }
     }
 
+    /**
+     * Uploads a new media file.
+     *
+     * @param file The [FileUpload] representing the uploaded file.
+     * @return A [Response] containing the newly created media entity as JSON if successful,
+     *         or a 500 Internal Server Error response if the upload fails.
+     */
     @POST
     @Path("/upload")
     @Consumes(MediaType.MULTIPART_FORM_DATA)
@@ -59,6 +83,13 @@ class MediaResource {
         }
     }
 
+    /**
+     * Deletes a media file by its ID.
+     *
+     * @param id The ID of the media file to delete.
+     * @return A [Response] indicating success if the media file is deleted,
+     *         or a 404 Not Found response if the media file does not exist.
+     */
     @DELETE
     @Path("/delete/{id}")
     fun deleteFile(@PathParam("id") id: Long): Response {
