@@ -7,8 +7,22 @@ import jakarta.enterprise.context.ApplicationScoped
 import jakarta.transaction.Transactional
 import java.time.LocalDateTime
 
+/**
+ * Repository class for managing address data operations in the database.
+ *
+ * @constructor Creates an [AddressRepository] instance.
+ */
 @ApplicationScoped
 class AddressRepository : PanacheRepository<AddressEntity> {
+
+    /**
+     * Creates a new address in the database.
+     *
+     * @param street The street of the new address.
+     * @param city The city of the new address.
+     * @param postalCode The postal code of the new address.
+     * @return The created [AddressEntity] instance.
+     */
     @Transactional
     fun create(street: String, city: String, postalCode: String): AddressEntity {
         val entity = AddressEntity()
@@ -24,6 +38,14 @@ class AddressRepository : PanacheRepository<AddressEntity> {
         return entity
     }
 
+    /**
+     * Updates address information in the database.
+     *
+     * @param id The ID of the address to update.
+     * @param newStreet The new street to update, or null if not updating.
+     * @param newCity The new city to update, or null if not updating.
+     * @param newPostalCode The new postal code to update, or null if not updating.
+     */
     @Transactional
     fun update(id: Long, newStreet: String?, newCity: String?, newPostalCode: String?) {
         var fields = ""
@@ -46,6 +68,11 @@ class AddressRepository : PanacheRepository<AddressEntity> {
         update("$fields where id = :id", params)
     }
 
+    /**
+     * Deletes an address from the database by ID.
+     *
+     * @param id The ID of the address to delete.
+     */
     @Transactional
     fun delete(id: Long) = deleteById(id)
 }

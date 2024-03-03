@@ -8,6 +8,11 @@ import jakarta.enterprise.event.Observes
 import jakarta.inject.Inject
 import jakarta.transaction.Transactional
 
+/**
+ * Application startup class responsible for loading initial user and address data.
+ *
+ * @property userBean The [UserBean] for handling user-related operations.
+ */
 @ApplicationScoped
 class Startup {
 
@@ -59,6 +64,11 @@ class Startup {
         }
     }
 
+    /**
+     * Loads initial user and address data during application startup.
+     *
+     * @param evt The [StartupEvent] observed during application startup.
+     */
     @Transactional
     fun loadUsersAndAddresses(@Observes evt: StartupEvent?) {
         userBean.create(scott)

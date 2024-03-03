@@ -13,6 +13,12 @@ import jakarta.ws.rs.core.Response
 import org.eclipse.microprofile.jwt.JsonWebToken
 import org.jboss.logging.Logger
 
+/**
+ * This class represents a RESTful web service resource for managing user-related operations.
+ *
+ * @property jwt JsonWebToken object for handling JWT authentication.
+ * @property userBean UserBean object for interacting with user-related data and business logic.
+ */
 @RequestScoped
 @Path("/")
 @Consumes(MediaType.APPLICATION_JSON)
@@ -28,6 +34,12 @@ class UserResource {
     @Inject
     lateinit var userBean: UserBean
 
+    /**
+     * Maps a [UserEntity] object to a [UserResponse] object.
+     *
+     * @param user The user entity to be mapped.
+     * @return A [UserResponse] object representing the user.
+     */
     fun userToResponse(user: UserEntity) = UserResponse(
         user.id!!,
         user.username,
@@ -40,6 +52,12 @@ class UserResource {
         ),
     )
 
+    /**
+     * Endpoint for creating a new user.
+     *
+     * @param request The [CreateUser] request object containing user details.
+     * @return A [Response] indicating the success or failure of the operation.
+     */
     @POST
     fun createUser(request: CreateUser): Response {
         return try {
@@ -50,6 +68,12 @@ class UserResource {
         }
     }
 
+    /**
+     * Endpoint for retrieving user details by ID.
+     *
+     * @param id The ID of the user to retrieve.
+     * @return A [Response] containing the user details or an error response.
+     */
     @GET
     @Path("/{id}")
     fun get(@PathParam("id") id: Long): Response {
@@ -61,6 +85,11 @@ class UserResource {
         }
     }
 
+    /**
+     * Endpoint for retrieving all users.
+     *
+     * @return A [Response] containing a list of users or a "No Content" response if no users are found.
+     */
     @GET
     fun getAll(): Response {
         return try {
@@ -76,6 +105,15 @@ class UserResource {
         }
     }
 
+
+    /**
+     * Endpoint for updating user details by ID.
+     *
+     * @param id The ID of the user to update.
+     * @param rawToken The raw authentication token from the request header.
+     * @param request The [UpdateUser] request object containing updated user details.
+     * @return A [Response] indicating the success or failure of the operation.
+     */
     @PUT
     @Path("/{id}")
     @Authenticated
@@ -96,6 +134,13 @@ class UserResource {
         }
     }
 
+    /**
+     * Endpoint for deleting a user by ID.
+     *
+     * @param id The ID of the user to delete.
+     * @param credentials The [UserCredentials] object containing user credentials for authentication.
+     * @return A [Response] indicating the success or failure of the operation.
+     */
     @DELETE
     @Path("/{id}")
     fun delete(@PathParam("id") id: Long, @BeanParam credentials: UserCredentials): Response {
