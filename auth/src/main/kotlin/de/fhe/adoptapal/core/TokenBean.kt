@@ -14,6 +14,9 @@ import java.security.PrivateKey
 import java.security.spec.PKCS8EncodedKeySpec
 import java.util.*
 
+/**
+ * Class representing the business logic for token-related operations.
+ */
 @ApplicationScoped
 class TokenBean {
     data class Token(var token: TokenEntity, var tokenString: String)
@@ -79,17 +82,35 @@ class TokenBean {
     @Inject
     private lateinit var userBean: UserBean
 
+    /**
+     * Ensures the existence of a token with the given ID.
+     * @param id The ID of the token.
+     * @return The token entity.
+     * @throws TokenNotFoundException if the token does not exist.
+     */
     @Transactional
     fun validateTokenExists(id: Long): TokenEntity {
         LOG.info("ensuring existence of token with id `$id`")
         return repository.find(id) ?: throw TokenNotFoundException(id)
     }
 
+    /**
+     * Validates user credentials for authentication.
+     * @param credentials The user credentials.
+     * @param userId The ID of the user.
+     * @throws PasswordAuthenticationException if authentication fails.
+     */
     @Transactional
     fun validateCredentials(credentials: UserCredentials, userId: Long) {
         userBean.validateCredentials(credentials, userId)
     }
 
+    /**
+     * Validates user credentials from a JSON Web Token (JWT).
+     * @param jwt The JSON Web Token.
+     * @param userId The ID of the user.
+     * @throws TokenAuthenticationException if authentication fails.
+     */
     @Transactional
     fun validateCredentials(jwt: JsonWebToken, userId: Long) {
         userBean.validateCredentials(jwt, userId)
@@ -109,6 +130,12 @@ class TokenBean {
         }
     }
 
+    /**
+     * Creates a new token for a user.
+     * @param userId The ID of the user.
+     * @param email The email of the user.
+     * @return The created token entity and its string representation.
+     */
     @Transactional
     fun createForUser(userId: Long, email: String): Token {
         LOG.info("generating new token for user with id `$userId`")
@@ -129,6 +156,13 @@ class TokenBean {
         return Token(newValidity, claimsBuilder.jws().sign(privateKey))
     }
 
+    /**
+     * Retrieves a token for a user by ID.
+     * @param userId The ID of the user.
+     * @param id The ID of the token.
+     * @return The token entity.
+     * @throws TokenNotFoundException if the token does not exist.
+     */
     @Transactional
     fun getForUser(userId: Long, id: Long): TokenEntity {
         LOG.info("listing token with id `$id` for user with id `$userId`")

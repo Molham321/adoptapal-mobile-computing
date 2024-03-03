@@ -12,6 +12,9 @@ import jakarta.ws.rs.core.Response
 import org.eclipse.microprofile.jwt.JsonWebToken
 import org.jboss.logging.Logger
 
+/**
+ * Resource class for handling user-related operations.
+ */
 @RequestScoped
 @Path("/user")
 @Produces(MediaType.APPLICATION_JSON)
@@ -26,6 +29,12 @@ class UserResource {
     @Inject
     private lateinit var userBean: UserBean
 
+    /**
+     * Endpoint for creating a new user.
+     *
+     * @param request The request body containing user information.
+     * @return Response indicating the success or failure of the operation.
+     */
     @POST
     fun create(request: CreateUser): Response {
         return try {
@@ -37,6 +46,12 @@ class UserResource {
         }
     }
 
+    /**
+     * Endpoint for retrieving user information by user ID.
+     *
+     * @param id The ID of the user.
+     * @return Response containing user information if successful, or an error response.
+     */
     @GET
     @Path("/{id}")
     @Authenticated
@@ -51,6 +66,14 @@ class UserResource {
         }
     }
 
+    /**
+     * Endpoint for updating user information by user ID.
+     *
+     * @param id The ID of the user.
+     * @param credentials User credentials for authentication.
+     * @param request The request body containing updated user information.
+     * @return Response indicating the success or failure of the operation.
+     */
     @PUT
     @Path("/{id}")
     fun update(@PathParam("id") id: Long, @BeanParam credentials: UserCredentials, request: UpdateUser): Response {
@@ -64,6 +87,13 @@ class UserResource {
         }
     }
 
+    /**
+     * Endpoint for deleting a user by user ID.
+     *
+     * @param id The ID of the user.
+     * @param credentials User credentials for authentication.
+     * @return Response indicating the success or failure of the operation.
+     */
     @DELETE
     @Path("/{id}")
     fun delete(@PathParam("id") id: Long, @BeanParam credentials: UserCredentials): Response {
@@ -77,6 +107,13 @@ class UserResource {
         }
     }
 
+    /**
+     * Endpoint for validating user credentials.
+     *
+     * @param userId The ID of the user to validate.
+     * @param credentials User credentials for validation.
+     * @return Response indicating the success or failure of the validation.
+     */
     @GET
     @Path("/{userId}/validate")
     fun validate(@PathParam("userId") userId: Long, @BeanParam credentials: UserCredentials): Response {

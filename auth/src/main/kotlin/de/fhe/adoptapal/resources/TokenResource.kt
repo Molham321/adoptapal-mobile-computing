@@ -13,6 +13,9 @@ import jakarta.ws.rs.*
 import jakarta.ws.rs.core.MediaType
 import jakarta.ws.rs.core.Response
 
+/**
+ * Resource class for handling token-related operations.
+ */
 @RequestScoped
 @Path("/token")
 @Consumes(MediaType.APPLICATION_JSON)
@@ -28,6 +31,13 @@ class TokenResource {
     @Inject
     private lateinit var tokenBean: TokenBean
 
+    /**
+     * Endpoint for creating a new token for a specific user.
+     *
+     * @param userId The ID of the user for whom the token is created.
+     * @param credentials User credentials for authentication.
+     * @return Response containing the newly generated token information.
+     */
     @GET
     @Path("/{userId}/new")
     fun createForUser(@PathParam("userId") userId: Long, @BeanParam credentials: UserCredentials): Response {
@@ -41,6 +51,13 @@ class TokenResource {
         }
     }
 
+    /**
+     * Endpoint for retrieving information about a specific token for a user.
+     *
+     * @param userId The ID of the user.
+     * @param id The ID of the token.
+     * @return Response containing the token information if successful, or an error response.
+     */
     @GET
     @Path("/{userId}/{id}")
     @Authenticated
@@ -55,6 +72,12 @@ class TokenResource {
         }
     }
 
+    /**
+     * Endpoint for retrieving all tokens for a specific user.
+     *
+     * @param userId The ID of the user.
+     * @return Response containing the list of tokens if successful, or an error response.
+     */
     @GET
     @Path("/{userId}/all")
     @Authenticated
@@ -73,9 +96,21 @@ class TokenResource {
         }
     }
 
+    /**
+     * Endpoint for deleting a specific token for a user.
+     *
+     * @param userId The ID of the user.
+     * @param id The ID of the token to be deleted.
+     * @param credentials User credentials for authentication.
+     * @return Response indicating the success or failure of the operation.
+     */
     @DELETE
     @Path("/{userId}/{id}")
-    fun deleteForUser(@PathParam("userId") userId: Long, @PathParam("id") id: Long, @BeanParam credentials: UserCredentials): Response {
+    fun deleteForUser(
+        @PathParam("userId") userId: Long,
+        @PathParam("id") id: Long,
+        @BeanParam credentials: UserCredentials
+    ): Response {
         return try {
             tokenBean.validateCredentials(credentials, userId)
             tokenBean.deleteForUser(userId, id)
@@ -86,6 +121,13 @@ class TokenResource {
         }
     }
 
+    /**
+     * Endpoint for deleting all tokens for a specific user.
+     *
+     * @param userId The ID of the user.
+     * @param credentials User credentials for authentication.
+     * @return Response indicating the success or failure of the operation.
+     */
     @DELETE
     @Path("/{userId}/all")
     fun deleteAllForUser(@PathParam("userId") userId: Long, @BeanParam credentials: UserCredentials): Response {
@@ -99,6 +141,12 @@ class TokenResource {
         }
     }
 
+    /**
+     * Endpoint for validating a token associated with a specific user.
+     *
+     * @param userId The ID of the user.
+     * @return Response indicating the success or failure of the token validation.
+     */
     @GET
     @Path("/{userId}/validate")
     @Authenticated

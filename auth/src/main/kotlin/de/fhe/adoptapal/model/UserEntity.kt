@@ -14,6 +14,9 @@ import jakarta.persistence.GeneratedValue
 import jakarta.persistence.Id
 import jakarta.transaction.Transactional
 
+/**
+ * Entity class representing a user.
+ */
 @Entity
 @UserDefinition
 class UserEntity {
@@ -37,8 +40,20 @@ class UserEntity {
     }
 }
 
+/**
+ * Repository class for managing user entities.
+ */
 @ApplicationScoped
-class UserRepository: PanacheRepository<UserEntity> {
+class UserRepository : PanacheRepository<UserEntity> {
+
+    /**
+     * Creates a new user entity with the specified email, password, and role.
+     *
+     * @param email The email of the user.
+     * @param password The password of the user.
+     * @param role The role of the user (default is USER).
+     * @return The created user entity.
+     */
     @Transactional
     fun create(email: String, password: String, role: UserEntity.Role = UserEntity.Role.USER): UserEntity {
         val entity = UserEntity()
@@ -51,12 +66,32 @@ class UserRepository: PanacheRepository<UserEntity> {
         return entity
     }
 
+    /**
+     * Finds a user entity by its ID.
+     *
+     * @param id The ID of the user.
+     * @return The user entity if found, otherwise null.
+     */
     @Transactional
     fun find(id: Long): UserEntity? = find("id", id).firstResult()
 
+    /**
+     * Finds a user entity by its email.
+     *
+     * @param email The email of the user.
+     * @return The user entity if found, otherwise null.
+     */
     @Transactional
     fun find(email: String): UserEntity? = find("email", email).firstResult()
 
+    /**
+     * Updates the specified fields of a user entity.
+     *
+     * @param id The ID of the user.
+     * @param newEmail The new email (if not null).
+     * @param newPassword The new password (if not null).
+     * @param newRole The new role (if not null).
+     */
     @Transactional
     fun update(id: Long, newEmail: String?, newPassword: String?, newRole: UserEntity.Role?) {
         var fields = ""
@@ -79,6 +114,11 @@ class UserRepository: PanacheRepository<UserEntity> {
         update("$fields where id = :id", params)
     }
 
+    /**
+     * Deletes a user entity by its ID.
+     *
+     * @param id The ID of the user to be deleted.
+     */
     @Transactional
     fun delete(id: Long) = deleteById(id)
 }
