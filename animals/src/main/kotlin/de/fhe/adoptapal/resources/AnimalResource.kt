@@ -3,20 +3,24 @@ package de.fhe.adoptapal.resources
 import de.fhe.adoptapal.core.AuthServiceClient
 import de.fhe.adoptapal.model.AnimalEntity
 import de.fhe.adoptapal.model.AnimalRepository
-import io.quarkus.arc.ComponentsProvider.LOG
 import io.quarkus.rest.client.reactive.QuarkusRestClientBuilder
 import io.quarkus.security.Authenticated
 import jakarta.enterprise.context.RequestScoped
 import jakarta.inject.Inject
 import jakarta.ws.rs.*
-import jakarta.ws.rs.core.Context
-import jakarta.ws.rs.core.HttpHeaders
 import jakarta.ws.rs.core.MediaType
 import jakarta.ws.rs.core.Response
 import org.eclipse.microprofile.jwt.JsonWebToken
 import org.jboss.logging.Logger
 import java.net.URI
 
+/**
+ * Resource class for handling animal-related operations.
+ *
+ * @property animalRepository The [AnimalRepository] for accessing animal data.
+ * @property jwt The JSON Web Token for authentication.
+ * @property authService The [AuthServiceClient] for communication with the authentication service.
+ */
 @RequestScoped
 @Path("/animals")
 class AnimalResource {
@@ -30,10 +34,15 @@ class AnimalResource {
     @Inject
     private lateinit var jwt: JsonWebToken
 
-    private var authService: AuthServiceClient = QuarkusRestClientBuilder.newBuilder()
-        .baseUri(URI.create("http://auth:8080/"))
-        .build(AuthServiceClient::class.java)
+    private var authService: AuthServiceClient =
+        QuarkusRestClientBuilder.newBuilder().baseUri(URI.create("http://auth:8080/"))
+            .build(AuthServiceClient::class.java)
 
+    /**
+     * Retrieves all available animals.
+     *
+     * @return A [Response] containing the list of [AnimalEntity] objects.
+     */
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     fun getAll(): Response? {
@@ -53,6 +62,12 @@ class AnimalResource {
         }
     }
 
+    /**
+     * Retrieves an animal by its ID.
+     *
+     * @param id The ID of the animal to retrieve.
+     * @return A [Response] containing the [AnimalEntity] with the specified ID.
+     */
     @GET
     @Path("/{id}")
     @Produces(MediaType.APPLICATION_JSON)
@@ -66,6 +81,12 @@ class AnimalResource {
         }
     }
 
+    /**
+     * Retrieves animals by owner ID.
+     *
+     * @param owner The ID of the owner.
+     * @return A [Response] containing the list of [AnimalEntity] objects owned by the specified owner.
+     */
     @GET
     @Path("/owner/{owner}")
     @Produces(MediaType.APPLICATION_JSON)
@@ -86,6 +107,13 @@ class AnimalResource {
         }
     }
 
+    /**
+     * Creates a new animal.
+     *
+     * @param newAnimal The [AnimalEntity] representing the new animal.
+     * @param rawToken The raw authentication token.
+     * @return A [Response] indicating the success or failure of the operation.
+     */
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
@@ -111,6 +139,13 @@ class AnimalResource {
         }
     }
 
+    /**
+     * Deletes an animal by its ID.
+     *
+     * @param id The ID of the animal to delete.
+     * @param rawToken The raw authentication token.
+     * @return A [Response] indicating the success or failure of the operation.
+     */
     @DELETE
     @Path("/{id}")
     @Authenticated

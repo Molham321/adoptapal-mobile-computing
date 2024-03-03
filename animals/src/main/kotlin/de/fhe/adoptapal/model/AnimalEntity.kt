@@ -9,6 +9,23 @@ import jakarta.transaction.Transactional
 import java.time.LocalDate
 import java.time.LocalDateTime
 
+/**
+ * Entity class representing an animal available for adoption.
+ *
+ * @property id The unique identifier for the animal entity.
+ * @property createdTimestamp The timestamp indicating when the animal entity was initially created.
+ * @property lastChangeTimestamp The timestamp indicating the last time the animal entity was modified.
+ * @property isDeleted A flag indicating whether the animal entity is marked as deleted.
+ * @property owner The ID of the owner of the animal.
+ * @property name The name of the animal.
+ * @property description The description or details about the animal.
+ * @property color The ID of the color associated with the animal.
+ * @property isMale A flag indicating whether the animal is male.
+ * @property animalCategory The ID of the animal category to which the animal belongs.
+ * @property birthday The birthday or birthdate of the animal.
+ * @property weight The weight of the animal.
+ * @property image The ID of the image associated with the animal.
+ */
 @Entity
 class AnimalEntity {
     @Id
@@ -40,9 +57,28 @@ class AnimalEntity {
     var image: Long? = null
 }
 
+/**
+ * Repository class for performing CRUD operations on [AnimalEntity].
+ *
+ * This class provides methods for adding, retrieving, updating, and deleting animal entities.
+ */
 @Transactional
 @ApplicationScoped
 class AnimalRepository : PanacheRepository<AnimalEntity> {
+
+    /**
+     * Adds a new animal entity to the repository.
+     *
+     * @param name The name of the animal.
+     * @param description The description or details about the animal.
+     * @param color The ID of the color associated with the animal.
+     * @param isMale A flag indicating whether the animal is male.
+     * @param animalCategory The ID of the animal category to which the animal belongs.
+     * @param birthday The birthday or birthdate of the animal.
+     * @param weight The weight of the animal.
+     * @param owner The ID of the owner of the animal.
+     * @param image The ID of the image associated with the animal.
+     */
     fun add(
         name: String,
         description: String,
@@ -72,14 +108,12 @@ class AnimalRepository : PanacheRepository<AnimalEntity> {
         persist(animalEntity)
     }
 
-//    fun getAllAnimals(): List<AnimalEntity> {
-//        return listAll();
-//    }
-//
-//    fun findByID(id: Long): AnimalEntity? {
-//        return find("id", id).firstResult();
-//    }
-
+    /**
+     * Retrieves a list of animals owned by a specific user.
+     *
+     * @param owner The ID of the owner.
+     * @return The list of animals owned by the specified user.
+     */
     fun getAnimalsByOwner(owner: Long): List<AnimalEntity> {
         return find("owner", owner).list();
     }

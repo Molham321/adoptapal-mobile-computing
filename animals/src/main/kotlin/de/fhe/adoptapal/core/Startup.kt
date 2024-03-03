@@ -10,6 +10,13 @@ import jakarta.inject.Inject
 import jakarta.transaction.Transactional
 import java.time.LocalDate
 
+/**
+ * Application-scoped class responsible for initializing the application during startup.
+ *
+ * @property animalRepository The repository for managing animal entities.
+ * @property animalCategoryRepository The repository for managing animal category entities.
+ * @property colorRepository The repository for managing color entities.
+ */
 @ApplicationScoped
 class Startup {
     @Inject
@@ -21,6 +28,13 @@ class Startup {
     @Inject
     lateinit var colorRepository: ColorRepository
 
+    /**
+     * Transactional method that initializes the application during startup.
+     *
+     * Deletes existing animal entities, adds color and category entities, and adds sample animal entities.
+     *
+     * @param evt The observed startup event.
+     */
     @Transactional
     fun loadAnimals(@Observes evt: StartupEvent?) {
 
@@ -48,32 +62,28 @@ class Startup {
             val category7 = animalCategoryRepository.add("Andere")
 
             it.add(
-                    "Albert",
-                    "Albert die schwarze Katze",
-                    color2.id,
-                    true,
-                    category1.id,
-                    LocalDate.of(2018, 7, 30),
-                    2.5f,
-                    1,
-                    1
+                "Albert",
+                "Albert die schwarze Katze",
+                color2.id,
+                true,
+                category1.id,
+                LocalDate.of(2018, 7, 30),
+                2.5f,
+                1,
+                1
             )
 
             it.add(
-                    "Daisy",
-                    "Daisy die freundliche Dame",
-                    color7.id,
-                    false,
-                    category2.id,
-                    LocalDate.of(2020, 12, 9),
-                    4.8f,
-                    1,
-                    2
+                "Daisy",
+                "Daisy die freundliche Dame",
+                color7.id,
+                false,
+                category2.id,
+                LocalDate.of(2020, 12, 9),
+                4.8f,
+                1,
+                2
             )
-
-           // it.flush()
-
-            // animalRepository.getAllAnimals()
         }
     }
 }
