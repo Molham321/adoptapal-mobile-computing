@@ -21,16 +21,6 @@ class UserNotFoundException(val id: Long? = null, val email: String? = null) : E
         fun byId(id: Long): UserNotFoundException {
             return UserNotFoundException(id, null)
         }
-
-        /**
-         * Creates a [UserNotFoundException] based on the user's email.
-         *
-         * @param email The email of the user.
-         * @return A [UserNotFoundException] instance.
-         */
-        fun byEmail(email: String): UserNotFoundException {
-            return UserNotFoundException(null, email)
-        }
     }
 }
 

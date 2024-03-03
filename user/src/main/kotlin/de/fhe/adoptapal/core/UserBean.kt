@@ -88,7 +88,11 @@ class UserBean {
     @Transactional
     fun create(request: CreateUser): UserEntity {
         LOG.info("creating user")
-        val authUser = authService.create(AuthCreateUserRequest(request.email, request.password))
+        val authUser =  try {
+            authService.create(AuthCreateUserRequest(request.email, request.password))
+        } catch (e: Exception) {
+            throw EmailTakenException(request.email)
+        }
         val address = addressRepository.create(request.address.street, request.address.city, request.address.postalCode)
         return repository.create(request.username, request.phoneNumber, address, authUser.id)
     }
