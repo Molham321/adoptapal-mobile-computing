@@ -29,31 +29,33 @@ class AnimalRepository : PanacheRepository<AnimalEntity> {
      * @param owner The ID of the owner of the animal.
      * @param image The ID of the image associated with the animal.
      */
-    fun add(
+    fun create(
         name: String,
         description: String,
-        color: Long?,
+        color: Long,
         isMale: Boolean,
-        animalCategory: Long?,
+        animalCategory: Long,
         birthday: LocalDate,
         weight: Float,
-        owner: Long?,
-        image: Long?
-    ) {
-        val animalEntity = AnimalEntity()
-        animalEntity.name = name
-        animalEntity.description = description
-        animalEntity.color = color
-        animalEntity.isMale = isMale
-        animalEntity.animalCategory = animalCategory
-        animalEntity.birthday = birthday
-        animalEntity.weight = weight
-        animalEntity.owner = owner
-        animalEntity.image = image
+        owner: Long,
+        image: Long,
+    ): AnimalEntity {
+        val entity = AnimalEntity()
+        entity.name = name
+        entity.description = description
+        entity.color = color
+        entity.isMale = isMale
+        entity.animalCategory = animalCategory
+        entity.birthday = birthday
+        entity.weight = weight
+        entity.owner = owner
+        entity.image = image
 
-        animalEntity.createdTimestamp = LocalDateTime.now()
+        entity.createdTimestamp = LocalDateTime.now()
 
-        persist(animalEntity)
+        persist(entity)
+        flush()
+        return entity
     }
 
     /**
@@ -64,20 +66,5 @@ class AnimalRepository : PanacheRepository<AnimalEntity> {
      */
     fun getAnimalsByOwner(owner: Long): List<AnimalEntity> {
         return find("owner", owner).list();
-    }
-
-    @Transactional
-    fun createAnimal(animalEntity: AnimalEntity) {
-        persist(animalEntity);
-    }
-
-    @Transactional
-    fun updateAnimal(animalEntity: AnimalEntity) {
-        // updateAnimal notwendig?
-    }
-
-    @Transactional
-    fun deleteAnimal(id: Long) {
-        delete("id", id);
     }
 }

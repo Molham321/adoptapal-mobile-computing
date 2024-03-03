@@ -1,13 +1,11 @@
 package de.fhe.adoptapal.resources
 
+import de.fhe.adoptapal.model.ColorResponse
 import de.fhe.adoptapal.model.ColorEntity
 import de.fhe.adoptapal.repository.ColorRepository
 import jakarta.enterprise.context.RequestScoped
 import jakarta.inject.Inject
-import jakarta.ws.rs.GET
-import jakarta.ws.rs.Path
-import jakarta.ws.rs.PathParam
-import jakarta.ws.rs.Produces
+import jakarta.ws.rs.*
 import jakarta.ws.rs.core.MediaType
 import jakarta.ws.rs.core.Response
 import org.jboss.logging.Logger
@@ -20,6 +18,8 @@ import org.jboss.logging.Logger
  */
 @RequestScoped
 @Path("/animals/colors")
+@Consumes(MediaType.APPLICATION_JSON)
+@Produces(MediaType.APPLICATION_JSON)
 class ColorResource {
     companion object {
         private val LOG: Logger = Logger.getLogger(ColorResource::class.java)
@@ -28,27 +28,31 @@ class ColorResource {
     @Inject
     lateinit var colorRepository: ColorRepository
 
+    private fun entityToResponse(entity: ColorEntity): ColorResponse = ColorResponse(
+        entity.id!!,
+        entity.name,
+        entity.createdTimestamp,
+    )
+
     /**
      * Retrieves all available colors.
      *
      * @return A [Response] containing the list of [ColorEntity] objects.
      */
     @GET
-    @Produces(MediaType.APPLICATION_JSON)
     fun getAll(): Response? {
-        val colorEntities: List<ColorEntity> = colorRepository.listAll()
+         return try {
+            LOG.info("get all colors was executed successful")
 
-        return if (colorEntities.isNotEmpty()) {
-            try {
-                LOG.info("get all colors was executed successful")
-
-                Response.ok(colorEntities).build()
-            } catch (e: Exception) {
-                LOG.error("failed to get all colors", e)
-                Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(e.message).build()
+            val entities = colorRepository.findAll().list().map { entityToResponse(it) }
+            if (entities.isNotEmpty()) {
+                Response.ok(entities).build()
+            } else {
+                Response.status(Response.Status.NO_CONTENT).build()
             }
-        } else {
-            Response.status(Response.Status.NO_CONTENT).build()
+        } catch (e: Exception) {
+            LOG.error("failed to get all colors", e)
+            Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(e.message).build()
         }
     }
 
@@ -60,12 +64,11 @@ class ColorResource {
      */
     @GET
     @Path("/{id}")
-    @Produces(MediaType.APPLICATION_JSON)
     fun getById(@PathParam("id") id: Long): Response {
-        val colorEntity: ColorEntity? = colorRepository.findById(id)
+        val entity: ColorEntity? = colorRepository.findById(id)
 
-        return if (colorEntity != null) {
-            Response.ok(colorEntity).build()
+        return if (entity != null) {
+            Response.ok(entityToResponse(entity)).build()
         } else {
             Response.status(Response.Status.NOT_FOUND).entity("Color with ID $id not found").build()
         }

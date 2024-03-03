@@ -1,7 +1,7 @@
 package de.fhe.adoptapal.resources
 
 import de.fhe.adoptapal.core.AuthServiceClient
-import de.fhe.adoptapal.model.AnimalEntity
+import de.fhe.adoptapal.model.*
 import de.fhe.adoptapal.repository.AnimalRepository
 import io.quarkus.rest.client.reactive.QuarkusRestClientBuilder
 import io.quarkus.security.Authenticated
@@ -13,6 +13,7 @@ import jakarta.ws.rs.core.Response
 import org.eclipse.microprofile.jwt.JsonWebToken
 import org.jboss.logging.Logger
 import java.net.URI
+import java.time.LocalDate
 
 /**
  * Resource class for handling animal-related operations.
@@ -23,6 +24,8 @@ import java.net.URI
  */
 @RequestScoped
 @Path("/animals")
+@Consumes(MediaType.APPLICATION_JSON)
+@Produces(MediaType.APPLICATION_JSON)
 class AnimalResource {
     companion object {
         private val LOG: Logger = Logger.getLogger(AnimalResource::class.java)
@@ -31,11 +34,25 @@ class AnimalResource {
     @Inject
     lateinit var animalRepository: AnimalRepository
 
+    private fun entityToResponse(entity: AnimalEntity): AnimalResponse = AnimalResponse(
+            entity.id!!,
+            entity.owner,
+            entity.name,
+            entity.description,
+            entity.color,
+            entity.isMale,
+            entity.animalCategory,
+            entity.birthday,
+            entity.weight,
+            entity.image,
+            entity.createdTimestamp,
+    )
+
     @Inject
     private lateinit var jwt: JsonWebToken
 
-    private var authService: AuthServiceClient =
-        QuarkusRestClientBuilder.newBuilder().baseUri(URI.create("http://auth:8080/"))
+    private var authService: AuthServiceClient = QuarkusRestClientBuilder.newBuilder()
+            .baseUri(URI.create("http://auth:8080/"))
             .build(AuthServiceClient::class.java)
 
     /**
@@ -44,7 +61,6 @@ class AnimalResource {
      * @return A [Response] containing the list of [AnimalEntity] objects.
      */
     @GET
-    @Produces(MediaType.APPLICATION_JSON)
     fun getAll(): Response? {
         val animalEntities: List<AnimalEntity> = animalRepository.listAll()
 
@@ -70,7 +86,6 @@ class AnimalResource {
      */
     @GET
     @Path("/{id}")
-    @Produces(MediaType.APPLICATION_JSON)
     fun getById(@PathParam("id") id: Long): Response {
         val animalEntity: AnimalEntity? = animalRepository.findById(id)
 
@@ -89,40 +104,36 @@ class AnimalResource {
      */
     @GET
     @Path("/owner/{owner}")
-    @Produces(MediaType.APPLICATION_JSON)
     fun getByOwner(@PathParam("owner") owner: Long): Response {
-        val animalEntities: List<AnimalEntity> = animalRepository.getAnimalsByOwner(owner)
+        return try {
+            LOG.info("get animals by owner was executed successful")
 
-        return if (animalEntities.isNotEmpty()) {
-            try {
-                LOG.info("get animals by owner was executed successful")
-
-                Response.ok(animalEntities).build()
-            } catch (e: Exception) {
-                LOG.error("failed to get animals by owner", e)
-                Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(e.message).build()
+            val entities = animalRepository.getAnimalsByOwner(owner).map { entityToResponse(it) }
+            if (entities.isNotEmpty()) {
+                Response.ok(entities).build()
+            } else {
+                Response.status(Response.Status.NO_CONTENT).build()
             }
-        } else {
-            Response.status(Response.Status.NO_CONTENT).build()
+        } catch (e: Exception) {
+            LOG.error("failed to get animals by owner", e)
+            Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(e.message).build()
         }
     }
 
     /**
      * Creates a new animal.
      *
-     * @param newAnimal The [AnimalEntity] representing the new animal.
+     * @param request The [CreateAnimal] representing the new animal.
      * @param rawToken The raw authentication token.
      * @return A [Response] indicating the success or failure of the operation.
      */
     @POST
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
     @Authenticated
-    fun createAnimal(newAnimal: AnimalEntity, @HeaderParam("Authorization") rawToken: String): Response {
+    fun createAnimal(request: CreateAnimal, @HeaderParam("Authorization") rawToken: String): Response {
         return try {
             if (rawToken.startsWith("Bearer ")) {
                 try {
-                    authService.isTokenValid(newAnimal.owner!!, rawToken.substringAfter(" "))
+                    authService.isTokenValid(request.owner, rawToken.substringAfter(" "))
                 } catch (e: Exception) {
                     return Response.status(Response.Status.UNAUTHORIZED).build()
                 }
@@ -130,9 +141,19 @@ class AnimalResource {
                 return Response.status(Response.Status.UNAUTHORIZED).build()
             }
 
-            animalRepository.persist(newAnimal)
+            val entity = animalRepository.create(
+                request.name,
+                request.description,
+                request.color,
+                request.isMale,
+                request.animalCategory,
+                request.birthday,
+                request.weight,
+                request.owner,
+                request.image,
+            )
             LOG.info("Animal created successfully")
-            Response.status(Response.Status.CREATED).entity(newAnimal).build()
+            Response.status(Response.Status.CREATED).entity(entityToResponse(entity)).build()
         } catch (e: Exception) {
             LOG.error("Failed to create animal", e)
             Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(e.message).build()
@@ -151,7 +172,6 @@ class AnimalResource {
     @Authenticated
     fun deleteAnimal(@PathParam("id") id: Long, @HeaderParam("Authorization") rawToken: String): Response {
         return animalRepository.findById(id)?.let { animalEntity ->
-
             if (rawToken.startsWith("Bearer ")) {
                 try {
                     authService.isTokenValid(animalEntity.owner!!, rawToken.substringAfter(" "))

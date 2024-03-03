@@ -13,7 +13,7 @@ import java.time.LocalDateTime
  * @property name The name of the animal category.
  */
 @Entity
-class AnimalCategoryEntity {
+class CategoryEntity {
     @Id
     @GeneratedValue
     var id: Long? = null

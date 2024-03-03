@@ -29,21 +29,21 @@ class AnimalEntity {
 
     lateinit var createdTimestamp: LocalDateTime
 
-    var owner: Long? = null
+    var owner: Long = 0
 
     lateinit var name: String
 
     lateinit var description: String
 
-    var color: Long? = null
+    var color: Long = 0
 
     var isMale: Boolean = false
 
-    var animalCategory: Long? = null
+    var animalCategory: Long = 0
 
     lateinit var birthday: LocalDate
 
     var weight: Float = 0.0f
 
-    var image: Long? = null
+    var image: Long = 0
 }

@@ -21,11 +21,10 @@ class ColorRepository : PanacheRepository<ColorEntity> {
      * @return The created [ColorEntity].
      */
     @Transactional
-    fun add(name: String): ColorEntity {
+    fun create(name: String): ColorEntity {
         val colorEntity = ColorEntity()
 
         colorEntity.name = name
-
         colorEntity.createdTimestamp = LocalDateTime.now()
 
         persist(colorEntity)
