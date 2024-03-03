@@ -1,8 +1,8 @@
 package de.fhe.adoptapal.core
 
-import de.fhe.adoptapal.model.AnimalCategoryRepository
-import de.fhe.adoptapal.model.AnimalRepository
-import de.fhe.adoptapal.model.ColorRepository
+import de.fhe.adoptapal.repository.AnimalCategoryRepository
+import de.fhe.adoptapal.repository.AnimalRepository
+import de.fhe.adoptapal.repository.ColorRepository
 import io.quarkus.runtime.StartupEvent
 import jakarta.enterprise.context.ApplicationScoped
 import jakarta.enterprise.event.Observes

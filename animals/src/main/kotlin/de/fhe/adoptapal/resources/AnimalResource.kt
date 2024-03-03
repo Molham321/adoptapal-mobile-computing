@@ -2,7 +2,7 @@ package de.fhe.adoptapal.resources
 
 import de.fhe.adoptapal.core.AuthServiceClient
 import de.fhe.adoptapal.model.AnimalEntity
-import de.fhe.adoptapal.model.AnimalRepository
+import de.fhe.adoptapal.repository.AnimalRepository
 import io.quarkus.rest.client.reactive.QuarkusRestClientBuilder
 import io.quarkus.security.Authenticated
 import jakarta.enterprise.context.RequestScoped

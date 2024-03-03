@@ -1,7 +1,7 @@
 package de.fhe.adoptapal.resources
 
 import de.fhe.adoptapal.model.ColorEntity
-import de.fhe.adoptapal.model.ColorRepository
+import de.fhe.adoptapal.repository.ColorRepository
 import jakarta.enterprise.context.RequestScoped
 import jakarta.inject.Inject
 import jakarta.ws.rs.GET

@@ -1,7 +1,7 @@
 package de.fhe.adoptapal.resources
 
 import de.fhe.adoptapal.model.AnimalCategoryEntity
-import de.fhe.adoptapal.model.AnimalCategoryRepository
+import de.fhe.adoptapal.repository.AnimalCategoryRepository
 import jakarta.enterprise.context.RequestScoped
 import jakarta.inject.Inject
 import jakarta.ws.rs.GET
