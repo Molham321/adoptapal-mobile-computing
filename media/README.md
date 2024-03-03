@@ -8,15 +8,15 @@ Wird in der Anwendung beispielsweise zu einem neu-angelegte Tier ein Bild gespei
 
 ## REST Endpunkte
 
-**Bild Abrufen via ID (GET)**
+### Bild Abrufen via ID (GET)
 
-> http://localhost:80/media/media/1
+> http://localhost:80/media/media/<MEDIAID>
 
 Beispielantwort:
 
 + gespeicherte Bild-Datei
 
-**Medien-Eintrag und Bild erstellen (POST)**
+### Medien-Eintrag und Bild erstellen (POST)
 
 > http://localhost:80/media/media/upload
 
@@ -26,12 +26,22 @@ Beispiel-Eingabe-Form-Data (File):
 
 Beispielantwort:
 
-    {}
+```json
+{
+    "createdTimestamp": "2024-03-03T14:22:06.56146064",
+    "deleted": false,
+    "filePath": "82a92921-0c72-4738-aa3d-9e75cc3503ef",
+    "id": 1,
+    "lastChangeTimestamp": "2024-03-03T14:22:06.561478064",
+    "mediaType": "image/jpeg"
+}
+```
 
-**Medien-Eintrag und Bild löschen (DELETE)**
+### Medien-Eintrag und Bild löschen (DELETE)
 
-> http://localhost:80/media/media/delete/1
+> http://localhost:80/media/media/delete/<MEDIAID>
 
 Beispielantwort:
-
-    {}
+```
+Media with ID 1 deleted
+```

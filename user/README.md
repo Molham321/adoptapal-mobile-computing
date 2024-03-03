@@ -1,8 +1,9 @@
 # User Service
 
-This project uses Quarkus, the Supersonic Subatomic Java Framework.
+Der User Service verfaltet Nutzer und deren öffentliche Attribute.
 
-If you want to learn more about Quarkus, please visit its website: https://quarkus.io/ .
+Nutzer können per ID angefragt werden und benötigen bis auf Bearbeitung oder Löschen keine
+Authentifizierung.
 
 ## REST-Endpunkte
 
@@ -17,17 +18,13 @@ Beispielantwort:
         "address": {
             "city": "Metropolis",
             "createdTimestamp": "2024-03-01T15:56:31.284316",
-            "deleted": false,
             "id": 1,
-            "lastChangeTimestamp": "2024-03-01T15:56:31.28437",
             "postalCode": "12345",
             "street": "123 Main St"
         },
         "createdTimestamp": "2024-03-01T15:56:31.558431",
-        "deleted": false,
-        "email": "boss@example.com",
         "id": 1,
-        "lastChangeTimestamp": "2024-03-01T15:56:31.558457",
+        "authId": 1,
         "phoneNumber": "0123456789",
         "username": "scott"
     },
@@ -35,34 +32,26 @@ Beispielantwort:
         "address": {
             "city": "Smallville",
             "createdTimestamp": "2024-03-01T15:56:31.562533",
-            "deleted": false,
             "id": 2,
-            "lastChangeTimestamp": "2024-03-01T15:56:31.562547",
             "postalCode": "67890",
             "street": "456 Oak St"
         },
         "createdTimestamp": "2024-03-01T15:56:31.563214",
-        "deleted": false,
-        "email": "user@example.com",
         "id": 2,
-        "lastChangeTimestamp": "2024-03-01T15:56:31.563228",
+        "authId": 2,
         "username": "jdoe"
     },
     {
         "address": {
             "city": "Gotham",
             "createdTimestamp": "2024-03-01T15:56:31.563728",
-            "deleted": false,
             "id": 3,
-            "lastChangeTimestamp": "2024-03-01T15:56:31.563742",
             "postalCode": "54321",
             "street": "789 Pine St"
         },
         "createdTimestamp": "2024-03-01T15:56:31.58065",
-        "deleted": false,
-        "email": "alice@example.com",
         "id": 3,
-        "lastChangeTimestamp": "2024-03-01T15:56:31.580665",
+        "authId": 3,
         "phoneNumber": "9876543210",
         "username": "alice"
     },
@@ -70,17 +59,14 @@ Beispielantwort:
         "address": {
             "city": "Springfield",
             "createdTimestamp": "2024-03-01T15:56:31.58111",
-            "deleted": false,
             "id": 4,
-            "lastChangeTimestamp": "2024-03-01T15:56:31.581135",
             "postalCode": "11111",
             "street": "101 Elm St"
         },
         "createdTimestamp": "2024-03-01T15:56:31.581528",
-        "deleted": false,
         "email": "bob@example.com",
         "id": 4,
-        "lastChangeTimestamp": "2024-03-01T15:56:31.581545",
+        "authId": 4,
         "phoneNumber": "5555555555",
         "username": "bob"
     }
@@ -97,49 +83,19 @@ Beispielantwort:
     "address": {
         "city": "Metropolis",
         "createdTimestamp": "2024-03-01T15:56:31.284316",
-        "deleted": false,
         "id": 1,
-        "lastChangeTimestamp": "2024-03-01T15:56:31.28437",
         "postalCode": "12345",
         "street": "123 Main St"
     },
     "createdTimestamp": "2024-03-01T15:56:31.558431",
-    "deleted": false,
-    "email": "boss@example.com",
     "id": 1,
-    "lastChangeTimestamp": "2024-03-01T15:56:31.558457",
+    "authId": 1,
     "phoneNumber": "0123456789",
     "username": "scott"
 }
 ```
 
-### Nutzer abrufen via email (GET)
-
-> http://localhost:80/user/users/<EMAIL>
-
-Beispielantwort:
-```json
-{
-    "address": {
-        "city": "Metropolis",
-        "createdTimestamp": "2024-03-01T15:56:31.284316",
-        "deleted": false,
-        "id": 1,
-        "lastChangeTimestamp": "2024-03-01T15:56:31.28437",
-        "postalCode": "12345",
-        "street": "123 Main St"
-    },
-    "createdTimestamp": "2024-03-01T15:56:31.558431",
-    "deleted": false,
-    "email": "boss@example.com",
-    "id": 1,
-    "lastChangeTimestamp": "2024-03-01T15:56:31.558457",
-    "phoneNumber": "0123456789",
-    "username": "scott"
-}
-```
-
-### Nutzer löschen (DELETE)
+### Nutzer löschen (DELETE) (Passwort und Email für Owner bennötigt)
 
 > http://localhost:80/user/users/<USERID>
 
@@ -149,17 +105,13 @@ Beispielantwort:
     "address": {
         "city": "Metropolis",
         "createdTimestamp": "2024-03-01T15:56:31.284316",
-        "deleted": false,
         "id": 1,
-        "lastChangeTimestamp": "2024-03-01T15:56:31.28437",
         "postalCode": "12345",
         "street": "123 Main St"
     },
     "createdTimestamp": "2024-03-01T15:56:31.558431",
-    "deleted": false,
-    "email": "boss@example.com",
     "id": 1,
-    "lastChangeTimestamp": "2024-03-01T15:56:31.558457",
+    "authId": 1,
     "phoneNumber": "0123456789",
     "username": "scott"
 }
@@ -174,6 +126,7 @@ Beispiel-Eingabe-JSON:
 {
     "username": "example", 
     "email": "example@example2341.com", 
+    "password": "secret",
     "phoneNumber": "1234567890"
 }
 ```
@@ -184,24 +137,19 @@ Beispielantwort:
     "address": {
         "city": "",
         "createdTimestamp": "2024-03-01T16:03:45.722371715",
-        "deleted": false,
         "id": 5,
-        "lastChangeTimestamp": "2024-03-01T16:03:45.722378715",
         "postalCode": "",
         "street": ""
     },
     "createdTimestamp": "2024-03-01T16:03:45.716518813",
-    "deleted": false,
-    "email": "example@example2341.com",
     "id": 5,
-    "lastChangeTimestamp": "2024-03-01T16:03:45.716540914",
+    "authId": 5,
     "phoneNumber": "1234567890",
     "username": "example"
 }
 ```
 
-### Nutzer aktualisieren (PUT)
-
+### Nutzer aktualisieren (PUT) (Token für Owner bennötigt)
 > http://localhost:80/user/users/<USERID>
 
 Beispiel-Eingabe-JSON:
@@ -222,17 +170,14 @@ Beispielantwort:
     "address": {
         "city": "Weimar",
         "createdTimestamp": "2024-03-01T16:03:45.722372",
-        "deleted": false,
         "id": 5,
-        "lastChangeTimestamp": "2024-03-01T16:06:28.183173026",
         "postalCode": "99423",
         "street": "Döllstädtstraße 8"
     },
     "createdTimestamp": "2024-03-01T16:03:45.716519",
     "deleted": false,
-    "email": "example@example2341.com",
     "id": 5,
-    "lastChangeTimestamp": "2024-03-01T16:06:28.183136625",
+    "authId": 5,
     "phoneNumber": "1234567890",
     "username": "example"
 }
