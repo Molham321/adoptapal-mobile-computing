@@ -1,10 +1,7 @@
 package de.fhe.adoptapal.resources
 
-// import com.sun.istack.logging.Logger
-import de.fhe.adoptapal.model.AnimalEntity
 import de.fhe.adoptapal.model.ColorEntity
 import de.fhe.adoptapal.model.ColorRepository
-import io.quarkus.arc.ComponentsProvider
 import jakarta.enterprise.context.RequestScoped
 import jakarta.inject.Inject
 import jakarta.ws.rs.GET
@@ -16,6 +13,11 @@ import jakarta.ws.rs.core.Response
 import org.jboss.logging.Logger
 
 
+/**
+ * Resource class for handling color-related operations.
+ *
+ * @property colorRepository The [ColorRepository] for accessing color data.
+ */
 @RequestScoped
 @Path("/animals/colors")
 class ColorResource {
@@ -26,6 +28,11 @@ class ColorResource {
     @Inject
     lateinit var colorRepository: ColorRepository
 
+    /**
+     * Retrieves all available colors.
+     *
+     * @return A [Response] containing the list of [ColorEntity] objects.
+     */
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     fun getAll(): Response? {
@@ -45,6 +52,12 @@ class ColorResource {
         }
     }
 
+    /**
+     * Retrieves a color by its ID.
+     *
+     * @param id The ID of the color to retrieve.
+     * @return A [Response] containing the [ColorEntity] with the specified ID.
+     */
     @GET
     @Path("/{id}")
     @Produces(MediaType.APPLICATION_JSON)

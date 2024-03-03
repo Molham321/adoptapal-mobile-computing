@@ -72,9 +72,16 @@ fun mapExceptionToResponse(ex: Exception): Response {
 
             Response.status(Response.Status.BAD_REQUEST).entity(ErrorResponse("$ident not found")).build()
         }
-        is PasswordAuthenticationException -> Response.status(Response.Status.UNAUTHORIZED).entity(ErrorResponse("email or password incorrect")).build()
-        is EmailTakenException -> Response.status(Response.Status.BAD_REQUEST).entity(ErrorResponse("the email `${ex.email}` is already taken")).build()
-        is TokenAuthenticationException -> Response.status(Response.Status.UNAUTHORIZED).entity(ErrorResponse("trying to access restricted resource")).build()
+
+        is PasswordAuthenticationException -> Response.status(Response.Status.UNAUTHORIZED)
+            .entity(ErrorResponse("email or password incorrect")).build()
+
+        is EmailTakenException -> Response.status(Response.Status.BAD_REQUEST)
+            .entity(ErrorResponse("the email `${ex.email}` is already taken")).build()
+
+        is TokenAuthenticationException -> Response.status(Response.Status.UNAUTHORIZED)
+            .entity(ErrorResponse("trying to access restricted resource")).build()
+
         else -> Response.serverError().build()
     }
 }

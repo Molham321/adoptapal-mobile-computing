@@ -30,8 +30,8 @@ class UserBean {
     private lateinit var addressRepository: AddressRepository
 
     private var authService: AuthServiceClient = QuarkusRestClientBuilder.newBuilder()
-            .baseUri(URI.create("http://auth:8080/"))
-            .build(AuthServiceClient::class.java)
+        .baseUri(URI.create("http://auth:8080/"))
+        .build(AuthServiceClient::class.java)
 
     /**
      * Validates the existence of a user with the given ID.
@@ -129,7 +129,12 @@ class UserBean {
 
         repository.update(id, request.username, request.phoneNumber)
         if (request.address != null) {
-            addressRepository.update(user.address.id!!, request.address!!.street, request.address!!.city, request.address!!.postalCode)
+            addressRepository.update(
+                user.address.id!!,
+                request.address!!.street,
+                request.address!!.city,
+                request.address!!.postalCode
+            )
         }
     }
 

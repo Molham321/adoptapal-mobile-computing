@@ -15,7 +15,7 @@ import java.time.LocalDateTime
  * @constructor Creates a [UserRepository] instance.
  */
 @ApplicationScoped
-class UserRepository: PanacheRepository<UserEntity> {
+class UserRepository : PanacheRepository<UserEntity> {
 
     /**
      * Creates a new user in the database.

@@ -117,7 +117,11 @@ class UserResource {
     @PUT
     @Path("/{id}")
     @Authenticated
-    fun update(@PathParam("id") id: Long, @HeaderParam("Authorization") rawToken: String, request: UpdateUser): Response {
+    fun update(
+        @PathParam("id") id: Long,
+        @HeaderParam("Authorization") rawToken: String,
+        request: UpdateUser
+    ): Response {
         return try {
             val token = if (rawToken.startsWith("Bearer ")) {
                 rawToken.substringAfter(" ")
