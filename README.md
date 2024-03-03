@@ -65,4 +65,4 @@ Aufgaben:
 - Bereitstellen von Mediendaten (simples CDN)
 
 [pres]: ./docs/presentations/
-[postman]: ./docs/postman-workspace.json
+[postman]: ./docs/adoptapal.postman_collection.json
