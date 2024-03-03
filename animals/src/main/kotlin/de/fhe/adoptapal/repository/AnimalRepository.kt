@@ -52,8 +52,6 @@ class AnimalRepository : PanacheRepository<AnimalEntity> {
         animalEntity.image = image
 
         animalEntity.createdTimestamp = LocalDateTime.now()
-        animalEntity.lastChangeTimestamp = LocalDateTime.now()
-        animalEntity.isDeleted = false
 
         persist(animalEntity)
     }

@@ -27,8 +27,6 @@ class AnimalCategoryRepository : PanacheRepository<AnimalCategoryEntity> {
         animalCategoryEntity.name = name
 
         animalCategoryEntity.createdTimestamp = LocalDateTime.now()
-        animalCategoryEntity.lastChangeTimestamp = LocalDateTime.now()
-        animalCategoryEntity.isDeleted = false
 
         persist(animalCategoryEntity)
         return animalCategoryEntity

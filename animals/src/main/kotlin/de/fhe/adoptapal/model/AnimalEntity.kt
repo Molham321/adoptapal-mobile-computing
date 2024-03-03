@@ -11,8 +11,6 @@ import java.time.LocalDateTime
  *
  * @property id The unique identifier for the animal entity.
  * @property createdTimestamp The timestamp indicating when the animal entity was initially created.
- * @property lastChangeTimestamp The timestamp indicating the last time the animal entity was modified.
- * @property isDeleted A flag indicating whether the animal entity is marked as deleted.
  * @property owner The ID of the owner of the animal.
  * @property name The name of the animal.
  * @property description The description or details about the animal.
@@ -29,11 +27,7 @@ class AnimalEntity {
     @GeneratedValue
     var id: Long? = null
 
-    var createdTimestamp: LocalDateTime = LocalDateTime.now()
-
-    var lastChangeTimestamp: LocalDateTime = LocalDateTime.now()
-
-    var isDeleted: Boolean = false
+    lateinit var createdTimestamp: LocalDateTime
 
     var owner: Long? = null
 

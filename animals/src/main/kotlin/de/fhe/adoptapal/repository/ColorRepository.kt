@@ -27,8 +27,6 @@ class ColorRepository : PanacheRepository<ColorEntity> {
         colorEntity.name = name
 
         colorEntity.createdTimestamp = LocalDateTime.now()
-        colorEntity.lastChangeTimestamp = LocalDateTime.now()
-        colorEntity.isDeleted = false
 
         persist(colorEntity)
         return colorEntity
